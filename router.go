@@ -6,6 +6,10 @@ import (
 	"time"
 )
 
+// @TODO any substr handler
+// @TODO long pooling
+// @TODO replies from json files
+
 // VKBot - bot config
 type VKBot struct {
 	msgRoutes    map[string]func(*Message) string

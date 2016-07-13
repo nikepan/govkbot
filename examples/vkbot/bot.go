@@ -1,8 +1,8 @@
 package main
 
 import (
-	"./vkbot"
 	"fmt"
+	"github.com/nikepan/govkbot/vkbot"
 	"log"
 	"net/url"
 	"strconv"
