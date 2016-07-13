@@ -16,26 +16,26 @@ type configuration struct {
 }
 
 func getMeMessage(uid int) (reply string) {
-	me := vkbot.API.Me()
+	me := govkbot.API.Me()
 	return fmt.Sprintf("You: %+v %+v", me.FirstName, me.LastName)
 }
 
-func anyHandler(m *vkbot.Message) (reply string) {
+func anyHandler(m *govkbot.Message) (reply string) {
 	notifyAdmin(fmt.Sprintf("Command %+v by user vk.com/id%+v in chat %+v", m.Body, m.UserID, m.Title))
 	return reply
 }
 
-func meHandler(m *vkbot.Message) (reply string) {
+func meHandler(m *govkbot.Message) (reply string) {
 	return getMeMessage(m.UserID)
 }
 
-func helpHandler(m *vkbot.Message) (reply string) {
+func helpHandler(m *govkbot.Message) (reply string) {
 	return availableCommands
 }
 
-func inviteHandler(m *vkbot.Message) (reply string) {
-	log.Printf("invite: %+v %+v %+v\n", m.ActionMID, vkbot.API.Uid, m.ActionMID == vkbot.API.Uid)
-	if m.ActionMID == vkbot.API.Uid {
+func inviteHandler(m *govkbot.Message) (reply string) {
+	log.Printf("invite: %+v %+v %+v\n", m.ActionMID, govkbot.API.Uid, m.ActionMID == govkbot.API.Uid)
+	if m.ActionMID == govkbot.API.Uid {
 		go m.MarkAsRead()
 		notifyAdmin(fmt.Sprintf("I'm invited to chat %+v )", m.Title))
 		reply = replyGreet()
@@ -46,8 +46,8 @@ func inviteHandler(m *vkbot.Message) (reply string) {
 	return reply
 }
 
-func kickHandler(m *vkbot.Message) (reply string) {
-	if m.ActionMID == vkbot.API.Uid {
+func kickHandler(m *govkbot.Message) (reply string) {
+	if m.ActionMID == govkbot.API.Uid {
 		go m.MarkAsRead()
 		notifyAdmin(fmt.Sprintf("I'm kicked from chat %+v (", m.Title))
 	}
@@ -55,7 +55,7 @@ func kickHandler(m *vkbot.Message) (reply string) {
 }
 
 func greetUser(uid int) (reply string) {
-	u, ok := vkbot.API.User(uid)
+	u, ok := govkbot.API.User(uid)
 	if ok {
 		reply = fmt.Sprintf("Hello, %+v %+v", u.FirstName, u.LastName)
 	}
@@ -67,13 +67,13 @@ func replyGreet() (reply string) {
 	return reply
 }
 
-func addFriendHandler(m *vkbot.Message) (reply string) {
+func addFriendHandler(m *govkbot.Message) (reply string) {
 	log.Printf("friend %+v added\n", m.UserID)
 	notifyAdmin(fmt.Sprintf("user vk.com/id%+v add me to friends", m.UserID))
 	return reply
 }
 
-func deleteFriendHandler(m *vkbot.Message) (reply string) {
+func deleteFriendHandler(m *govkbot.Message) (reply string) {
 	log.Printf("friend %+v deleted\n", m.UserID)
 	notifyAdmin(fmt.Sprintf("user vk.com/id%+v delete me from friends", m.UserID))
 	return reply
@@ -84,6 +84,6 @@ func notifyAdmin(msg string) {
 		p := url.Values{}
 		p.Add("user_id", strconv.Itoa(config.AdminID))
 		p.Add("message", msg)
-		_ = vkbot.API.Call("messages.send", p)
+		_ = govkbot.API.Call("messages.send", p)
 	}
 }

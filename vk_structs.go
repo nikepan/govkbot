@@ -1,4 +1,4 @@
-package vkbot
+package govkbot
 
 // Message - VK message struct
 type Message struct {

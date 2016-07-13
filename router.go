@@ -1,4 +1,4 @@
-package vkbot
+package govkbot
 
 import (
 	"log"
