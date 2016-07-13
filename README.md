@@ -24,18 +24,18 @@ app_id you can get on page https://vk.com/editapp?act=create (standalone app)
 Usage example:
 
 ```Go
-func helpHandler(m *vkbot.Message) (reply string) {
+func helpHandler(m *govkbot.Message) (reply string) {
   return "help received"
 }
 
-//vkbot.HandleMessage("/", anyHandler)
-//vkbot.HandleMessage("/me", meHandler)
-vkbot.HandleMessage("/help", helpHandler)
+//govkbot.HandleMessage("/", anyHandler)
+//govkbot.HandleMessage("/me", meHandler)
+govkbot.HandleMessage("/help", helpHandler)
 
-//vkbot.HandleAction("chat_invite_user", inviteHandler)
-//vkbot.HandleAction("chat_kick_user", kickHandler)
-//vkbot.HandleAction("friend_add", addFriendHandler)
-//vkbot.HandleAction("friend_delete", deleteFriendHandler)
+//govkbot.HandleAction("chat_invite_user", inviteHandler)
+//govkbot.HandleAction("chat_kick_user", kickHandler)
+//govkbot.HandleAction("friend_add", addFriendHandler)
+//govkbot.HandleAction("friend_delete", deleteFriendHandler)
 
-vkbot.Listen(config.VKToken, "", "")
+govkbot.Listen(config.VKToken, "", "")
 ```
