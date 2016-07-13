@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/nikepan/govkbot/vkbot"
+	"github.com/nikepan/govkbot"
 	"log"
 	"net/url"
 	"strconv"

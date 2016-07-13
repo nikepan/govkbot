@@ -1,6 +1,6 @@
 package main
 
-import "github.com/nikepan/govkbot/vkbot"
+import "github.com/nikepan/govkbot"
 
 var config configuration
 
