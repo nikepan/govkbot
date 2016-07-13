@@ -8,7 +8,11 @@ It can:
 * Send greetings message when invited to chat
 * Add and remove mutual friends
 * Send notifies to admin
-  
+
+Installatioin:
+
+`go get github.com/nikepan/govkbot
+
 For work you need get VK access token with rights: messages,friends,offline.
 
 You can get it by this url in browser:
