@@ -9,7 +9,8 @@ For work you need valid VK access token with rights: messages,friends,offline.
 
 You can get it by this url in browser (for your IP):
 
-https://oauth.vk.com/authorize?client_id=5537411&scope=offline,group,messages,friends&display=page&response_type=token&redirect_uri=https://oauth.vk.com/blank.html
+https://oauth.vk.com/authorize?client_id={{app_id}}&scope=offline,group,messages,friends&display=page&response_type=token&redirect_uri=https://oauth.vk.com/blank.html
 
+app_id you can get on page https://vk.com/editapp?act=create (standalone app)
 
 Take this token to config.json and run app.
