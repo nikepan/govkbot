@@ -11,7 +11,7 @@ It can:
 
 Installatioin:
 
-`go get github.com/nikepan/govkbot
+`go get github.com/nikepan/govkbot`
 
 For work you need get VK access token with rights: messages,friends,offline.
 
