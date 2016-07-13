@@ -21,9 +21,12 @@ https://oauth.vk.com/authorize?client_id={{app_id}}&scope=offline,group,messages
 
 app_id you can get on page https://vk.com/editapp?act=create (standalone app)
 
-Usage example:
+# Quickstart
 
 ```Go
+package main
+import "github.com/nikepan/govkbot"
+
 func helpHandler(m *govkbot.Message) (reply string) {
   return "help received"
 }
