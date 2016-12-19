@@ -2,64 +2,95 @@ package govkbot
 
 import (
 	"encoding/json"
+	"errors"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
 	"strconv"
+	"time"
 )
 
 // VkAPI - api config
 type VkAPI struct {
-	Token   string
-	Url     string
-	Ver     string
-	Uid     int
-	AdminID int
+	Token           string
+	URL             string
+	Ver             string
+	UID             int
+	AdminID         int
+	MessagesCount   int
+	RequestInterval int
+	DEBUG           bool
 }
 
 // Call - main api call method
-func (api *VkAPI) Call(method string, parameters url.Values) []byte {
+func (api *VkAPI) Call(method string, parameters url.Values) ([]byte, error) {
 	p := "?" + parameters.Encode()
-	//log.Printf("vk req: %+v\n", api.Url+method+p)
+	if api.DEBUG {
+		log.Printf("vk req: %+v\n", api.URL+method+p)
+	}
 	parameters.Add("access_token", api.Token)
 	parameters.Add("v", api.Ver)
 	p = "?" + parameters.Encode()
-	resp, err := http.Get(api.Url + method + p)
+	resp, err := http.PostForm(api.URL+method, parameters)
 	if err != nil {
 		log.Println(err.Error())
-		return nil
+		time.Sleep(time.Duration(time.Millisecond * time.Duration(api.RequestInterval)))
+		return nil, err
 	}
 	buf, _ := ioutil.ReadAll(resp.Body)
-	//log.Printf("vk resp: %+v\n", string(buf))
-	return buf
+	time.Sleep(time.Duration(time.Millisecond * time.Duration(api.RequestInterval)))
+	if api.DEBUG {
+		log.Printf("vk resp: %+v\n", string(buf))
+	}
+	return buf, nil
 }
 
 // GetMessages - get user messages
-func (api *VkAPI) GetMessages() *Messages {
+func (api *VkAPI) GetMessages(count int, offset int) (*Messages, error) {
 
 	p := url.Values{}
+	p.Add("count", strconv.Itoa(count))
+	p.Add("offset", strconv.Itoa(offset))
 
-	buf := api.Call("messages.get", p)
+	buf, _ := api.Call("messages.get", p)
 
 	m := MessagesResponse{}
 	json.Unmarshal(buf, &m)
+	if m.Error != nil {
+		return &m.Response, errors.New(m.Error.ErrorMsg)
+	}
 
-	return &m.Response
+	return &m.Response, nil
 }
 
 // Me - get current user info
 func (api *VkAPI) Me() *User {
 	p := url.Values{}
 
-	buf := api.Call("users.get", p)
+	buf, _ := api.Call("users.get", p)
 
-	log.Printf("me: %+v\n", string(buf))
-
+	if api.DEBUG {
+		log.Printf("me: %+v\n", string(buf))
+	}
 	u := UsersResponse{}
 	json.Unmarshal(buf, &u)
 
 	return u.Response[0]
+}
+
+// GetChatInfo - returns Chat info by id
+func (api *VkAPI) GetChatInfo(chatID int) (*ChatInfo, *VKError) {
+	p := url.Values{}
+	p.Add("chat_id", strconv.Itoa(chatID))
+	p.Add("fields", "photo,city,country")
+	buf, _ := api.Call("messages.getChat", p)
+	u := ChatInfoResponse{}
+	json.Unmarshal(buf, &u)
+	if u.Error != nil {
+		return nil, u.Error
+	}
+	return &u.Response, nil
 }
 
 // GetChatUsers - get chat users
@@ -68,10 +99,11 @@ func (api *VkAPI) GetChatUsers(chatID int) []*User {
 	p.Add("chat_id", strconv.Itoa(chatID))
 	p.Add("fields", "photo")
 
-	buf := api.Call("messages.getChatUsers", p)
+	buf, _ := api.Call("messages.getChatUsers", p)
 
-	log.Printf("users: %+v\n", string(buf))
-
+	if api.DEBUG {
+		log.Printf("users: %+v\n", string(buf))
+	}
 	u := UsersResponse{}
 	json.Unmarshal(buf, &u)
 
@@ -85,7 +117,7 @@ func (api *VkAPI) GetFriendRequests(out bool) []int {
 		p.Add("out", "1")
 	}
 
-	buf := api.Call("friends.getRequests", p)
+	buf, _ := api.Call("friends.getRequests", p)
 	u := FriendRequestsResponse{}
 	json.Unmarshal(buf, &u)
 
@@ -97,7 +129,7 @@ func (api *VkAPI) AddFriend(uid int) bool {
 	p := url.Values{}
 	p.Add("user_id", strconv.Itoa(uid))
 
-	buf := api.Call("friends.add", p)
+	buf, _ := api.Call("friends.add", p)
 	u := SimpleResponse{}
 	json.Unmarshal(buf, &u)
 
@@ -109,7 +141,7 @@ func (api *VkAPI) DeleteFriend(uid int) bool {
 	p := url.Values{}
 	p.Add("user_id", strconv.Itoa(uid))
 
-	buf := api.Call("friends.delete", p)
+	buf, _ := api.Call("friends.delete", p)
 	u := SimpleResponse{}
 	json.Unmarshal(buf, &u)
 
@@ -122,15 +154,14 @@ func (api *VkAPI) User(uid int) (User, bool) {
 	p.Add("user_ids", strconv.Itoa(uid))
 	p.Add("fields", "sex")
 
-	buf := api.Call("users.get", p)
+	buf, _ := api.Call("users.get", p)
 
 	u := UsersResponse{}
 	json.Unmarshal(buf, &u)
 	if len(u.Response) > 0 {
 		return *u.Response[0], true
-	} else {
-		return User{}, false
 	}
+	return User{}, false
 }
 
 // MarkAsRead - mark message as read
@@ -139,19 +170,41 @@ func (m Message) MarkAsRead() {
 	p := url.Values{}
 	p.Add("message_ids", strconv.Itoa(m.ID))
 
-	_ = API.Call("messages.markAsRead", p)
+	_, _ = API.Call("messages.markAsRead", p)
 
 }
 
 // Reply - reply message
-func (m Message) Reply(msg string) {
+func (m Message) Reply(msg string) (err error) {
 	p := url.Values{}
 	if m.ChatID != 0 {
 		p.Add("chat_id", strconv.Itoa(m.ChatID))
 	} else {
 		p.Add("user_id", strconv.Itoa(m.UserID))
 	}
+	//p.Add("forward_messages", strconv.Itoa(m.ID))
 	p.Add("message", msg)
 
-	_ = API.Call("messages.send", p)
+	buf, _ := API.Call("messages.send", p)
+
+	u := SimpleResponse{}
+	json.Unmarshal(buf, &u)
+
+	if u.Error != nil {
+		log.Printf("%+v\n", u.Error.ErrorMsg)
+		return errors.New(u.Error.ErrorMsg)
+	}
+	return nil
+}
+
+// NotifyAdmin - send notify to admin
+func (api *VkAPI) NotifyAdmin(msg string) (err error) {
+	if api.AdminID != 0 {
+		p := url.Values{}
+		p.Add("user_id", strconv.Itoa(api.AdminID))
+		p.Add("message", msg)
+		_, err = api.Call("messages.send", p)
+		return err
+	}
+	return nil
 }

@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"github.com/nikepan/govkbot"
 	"log"
-	"net/url"
-	"strconv"
 )
 
 type configuration struct {
@@ -33,9 +31,13 @@ func helpHandler(m *govkbot.Message) (reply string) {
 	return availableCommands
 }
 
+func errorHandler(msg *govkbot.Message, err error) {
+	notifyAdmin("ERROR: " + err.Error())
+}
+
 func inviteHandler(m *govkbot.Message) (reply string) {
-	log.Printf("invite: %+v %+v %+v\n", m.ActionMID, govkbot.API.Uid, m.ActionMID == govkbot.API.Uid)
-	if m.ActionMID == govkbot.API.Uid {
+	log.Printf("invite: %+v %+v %+v\n", m.ActionMID, govkbot.API.UID, m.ActionMID == govkbot.API.UID)
+	if m.ActionMID == govkbot.API.UID {
 		go m.MarkAsRead()
 		notifyAdmin(fmt.Sprintf("I'm invited to chat %+v )", m.Title))
 		reply = replyGreet()
@@ -47,7 +49,7 @@ func inviteHandler(m *govkbot.Message) (reply string) {
 }
 
 func kickHandler(m *govkbot.Message) (reply string) {
-	if m.ActionMID == govkbot.API.Uid {
+	if m.ActionMID == govkbot.API.UID {
 		go m.MarkAsRead()
 		notifyAdmin(fmt.Sprintf("I'm kicked from chat %+v (", m.Title))
 	}
@@ -80,10 +82,9 @@ func deleteFriendHandler(m *govkbot.Message) (reply string) {
 }
 
 func notifyAdmin(msg string) {
-	if config.AdminID != 0 {
-		p := url.Values{}
-		p.Add("user_id", strconv.Itoa(config.AdminID))
-		p.Add("message", msg)
-		_ = govkbot.API.Call("messages.send", p)
+	log.Printf("VK ERROR: %+v\n", msg)
+	err := govkbot.NotifyAdmin(msg)
+	if err != nil {
+		log.Printf("VK Admin Notify ERROR: %+v\n", msg)
 	}
 }

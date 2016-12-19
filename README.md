@@ -26,9 +26,14 @@ app_id you can get on page https://vk.com/editapp?act=create (standalone app)
 ```Go
 package main
 import "github.com/nikepan/govkbot"
+import "log"
 
 func helpHandler(m *govkbot.Message) (reply string) {
   return "help received"
+}
+
+func errorHandler(m *govkbot.Message, err error) {
+  log.Fatal(err.Error())
 }
 
 //govkbot.HandleMessage("/", anyHandler)
@@ -39,6 +44,10 @@ govkbot.HandleMessage("/help", helpHandler)
 //govkbot.HandleAction("chat_kick_user", kickHandler)
 //govkbot.HandleAction("friend_add", addFriendHandler)
 //govkbot.HandleAction("friend_delete", deleteFriendHandler)
+
+govkbot.HandleError(errorHandler)
+
+bovkbot.SetDebug(true)
 
 govkbot.Listen(config.VKToken, "", "")
 ```

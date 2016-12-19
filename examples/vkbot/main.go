@@ -18,5 +18,9 @@ func main() {
 	govkbot.HandleAction("friend_add", addFriendHandler)
 	govkbot.HandleAction("friend_delete", deleteFriendHandler)
 
-	govkbot.Listen(config.VKToken, "", "")
+	govkbot.HandleError(errorHandler)
+
+	govkbot.SetDebug(true)
+
+	govkbot.Listen(config.VKToken, "", "", config.AdminID)
 }
