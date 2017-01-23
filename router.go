@@ -23,7 +23,7 @@ type VKBot struct {
 	markedMessages   map[int]*Message
 	lastUserMessages map[int]int
 	lastChatMessages map[int]int
-	autoFriend	 bool
+	autoFriend       bool
 }
 
 var bot = newBot()
@@ -166,7 +166,7 @@ func RouteAction(m *Message) (err error) {
 	return nil
 }
 
-// RouteMessages routes single message
+// RouteMessage routes single message
 func RouteMessage(m *Message) (err error) {
 	message := strings.TrimSpace(strings.ToLower(m.Body))
 	if strings.HasPrefix(message, "/ ") {
@@ -225,7 +225,6 @@ func Listen(token string, url string, ver string, adminID int) {
 	API.AdminID = adminID
 	API.UID = API.Me().ID
 
-
 	go friendReceiver()
 
 	c := time.Tick(3 * time.Second)
@@ -242,7 +241,6 @@ func Listen(token string, url string, ver string, adminID int) {
 		}
 	}
 }
-
 
 // CheckFriends checking friend invites and mathes and deletes mutual
 func CheckFriends() {

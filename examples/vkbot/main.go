@@ -29,7 +29,7 @@ func main() {
 
 	// Optional Direct VK API access
 	govkbot.SetAPI(config.VKToken, "", "") // Need only before Listen, if you use direct API
-	me := govkbot.API.Me() // call API method
+	me := govkbot.API.Me()                 // call API method
 	log.Printf("current user: %+v\n", me.FullName())
 	// Optional end
 

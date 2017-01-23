@@ -31,7 +31,7 @@ func (api *VkAPI) Call(method string, parameters url.Values) ([]byte, error) {
 	}
 	parameters.Add("access_token", api.Token)
 	parameters.Add("v", api.Ver)
-	p = "?" + parameters.Encode()
+
 	resp, err := http.PostForm(api.URL+method, parameters)
 	if err != nil {
 		log.Println(err.Error())

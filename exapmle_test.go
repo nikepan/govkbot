@@ -1,11 +1,10 @@
 package govkbot_test
 
 import (
+	"fmt"
 	"github.com/nikepan/govkbot"
 	"log"
-	"fmt"
 )
-
 
 func helpHandler(m *govkbot.Message) (reply string) {
 	return "Available commands: /help, /me\nYou message" + m.Body
@@ -21,12 +20,11 @@ func addFriendHandler(m *govkbot.Message) (reply string) {
 	return reply
 }
 
-
 func ExampleListen() {
 
 	//govkbot.HandleMessage("/", anyHandler) // any commands starts with "/"
 	//govkbot.HandleMessage("/me", meHandler)
-	govkbot.HandleMessage("/help", helpHandler)  // any commands starts with "/help"
+	govkbot.HandleMessage("/help", helpHandler) // any commands starts with "/help"
 
 	//govkbot.HandleAction("chat_invite_user", inviteHandler)
 	//govkbot.HandleAction("chat_kick_user", kickHandler)
@@ -41,7 +39,7 @@ func ExampleListen() {
 
 	// Optional Direct VK API access
 	govkbot.SetAPI("!!!!VK_TOKEN!!!!", "", "") // Need only before Listen, if you use direct API
-	me := govkbot.API.Me() // call API method
+	me := govkbot.API.Me()                     // call API method
 	log.Printf("current user: %+v\n", me.FullName())
 	// Optional end
 
