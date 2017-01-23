@@ -1,10 +1,3 @@
-/*
-Package govkbot is a pure Go client library for https://vk.com messaging API.
-It includes a API for receive and send messages, chats, users info and friending.
-It works simply, but need to manually get user token.
-This implementation don't use vk long pool API and proxies, and have limit 3 requests per second (VK API limit).
- */
-
 package govkbot
 
 import (
@@ -85,14 +78,14 @@ func SetAPI(token string, url string, ver string) {
 	}
 }
 
-// HandleMessage - add substr message handler
+// HandleMessage - add substr message handler.
 // Function must return string to reply or "" (if no reply)
 // You can use m.Reply(string), if need more replies in handler
 func HandleMessage(command string, handler func(*Message) string) {
 	bot.msgRoutes[command] = handler
 }
 
-// HandleAction - add action handler
+// HandleAction - add action handler.
 // Function must return string to reply or "" (if no reply)
 // You can use m.Reply(string), if need more replies in handler
 func HandleAction(command string, handler func(*Message) string) {
