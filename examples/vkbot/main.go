@@ -1,6 +1,9 @@
 package main
 
-import "github.com/nikepan/govkbot"
+import (
+	"github.com/nikepan/govkbot"
+	"log"
+)
 
 var config configuration
 
@@ -9,7 +12,7 @@ func main() {
 
 	readJSON("config.json", &config)
 
-	govkbot.HandleMessage("/", anyHandler)
+	govkbot.HandleMessage("/", anyHandler) // any commands starts with "/"
 	govkbot.HandleMessage("/me", meHandler)
 	govkbot.HandleMessage("/help", helpHandler)
 
@@ -20,7 +23,15 @@ func main() {
 
 	govkbot.HandleError(errorHandler)
 
-	govkbot.SetDebug(true)
+	govkbot.SetAutoFriend(true) // enable auto accept/delete friends
 
-	govkbot.Listen(config.VKToken, "", "", config.AdminID)
+	govkbot.SetDebug(true) // log debug messages
+
+	// Optional Direct VK API access
+	govkbot.SetAPI(config.VKToken, "", "") // Need only before Listen, if you use direct API
+	me := govkbot.API.Me() // call API method
+	log.Printf("current user: %+v\n", me.FullName())
+	// Optional end
+
+	govkbot.Listen(config.VKToken, "", "", config.AdminID) // start bot
 }

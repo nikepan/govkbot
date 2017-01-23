@@ -43,6 +43,14 @@ func (api *VkAPI) Call(method string, parameters url.Values) ([]byte, error) {
 	if api.DEBUG {
 		log.Printf("vk resp: %+v\n", string(buf))
 	}
+
+	u := SimpleResponse{}
+	json.Unmarshal(buf, &u)
+	if u.Error != nil {
+		log.Printf("%+v\n", u.Error.ErrorMsg)
+		return buf, errors.New(u.Error.ErrorMsg)
+	}
+
 	return buf, nil
 }
 
@@ -174,6 +182,24 @@ func (m Message) MarkAsRead() {
 
 }
 
+//SendChatMessage sending a message to chat
+func (api *VkAPI) SendChatMessage(chatID int, msg string) (err error) {
+	p := url.Values{}
+	p.Add("chat_id", strconv.Itoa(chatID))
+	p.Add("message", msg)
+	_, err = api.Call("messages.send", p)
+	return err
+}
+
+//SendMessage sending a message to user
+func (api *VkAPI) SendMessage(userID int, msg string) (err error) {
+	p := url.Values{}
+	p.Add("user_id", strconv.Itoa(userID))
+	p.Add("message", msg)
+	_, err = api.Call("messages.send", p)
+	return err
+}
+
 // Reply - reply message
 func (m Message) Reply(msg string) (err error) {
 	p := url.Values{}
@@ -185,26 +211,18 @@ func (m Message) Reply(msg string) (err error) {
 	//p.Add("forward_messages", strconv.Itoa(m.ID))
 	p.Add("message", msg)
 
-	buf, _ := API.Call("messages.send", p)
+	_, err = API.Call("messages.send", p)
 
-	u := SimpleResponse{}
-	json.Unmarshal(buf, &u)
-
-	if u.Error != nil {
-		log.Printf("%+v\n", u.Error.ErrorMsg)
-		return errors.New(u.Error.ErrorMsg)
+	if err != nil {
+		log.Printf("%+v\n", err.Error())
 	}
-	return nil
+	return err
 }
 
 // NotifyAdmin - send notify to admin
 func (api *VkAPI) NotifyAdmin(msg string) (err error) {
 	if api.AdminID != 0 {
-		p := url.Values{}
-		p.Add("user_id", strconv.Itoa(api.AdminID))
-		p.Add("message", msg)
-		_, err = api.Call("messages.send", p)
-		return err
+		return api.SendMessage(api.AdminID, msg)
 	}
 	return nil
 }

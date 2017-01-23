@@ -24,6 +24,7 @@ func anyHandler(m *govkbot.Message) (reply string) {
 }
 
 func meHandler(m *govkbot.Message) (reply string) {
+	m.Reply("WOW!")
 	return getMeMessage(m.UserID)
 }
 

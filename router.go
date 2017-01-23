@@ -1,3 +1,10 @@
+/*
+Package govkbot is a pure Go client library for https://vk.com messaging API.
+It includes a API for receive and send messages, chats, users info and friending.
+It works simply, but need to manually get user token.
+This implementation don't use vk long pool API and proxies, and have limit 3 requests per second (VK API limit).
+ */
+
 package govkbot
 
 import (
@@ -7,40 +14,43 @@ import (
 	"time"
 )
 
+// @TODO auth by user/password
 // @TODO any substr handler
 // @TODO long pooling
 // @TODO replies from json files
 
 // VKBot - bot config
 type VKBot struct {
-	msgRoutes      map[string]func(*Message) string
-	actionRoutes   map[string]func(*Message) string
-	cmdHandlers    map[string]func(*Message) string
-	msgHandlers    map[string]func(*Message) string
-	errorHandler   func(*Message, error)
-	LastMsg        int
-	markedMessages map[int]*Message
+	msgRoutes        map[string]func(*Message) string
+	actionRoutes     map[string]func(*Message) string
+	cmdHandlers      map[string]func(*Message) string
+	msgHandlers      map[string]func(*Message) string
+	errorHandler     func(*Message, error)
+	LastMsg          int
+	markedMessages   map[int]*Message
+	lastUserMessages map[int]int
+	lastChatMessages map[int]int
+	autoFriend	 bool
 }
 
 var bot = newBot()
-
-// DEBUG - log debug messages
-var DEBUG = false
 
 //API - bot API
 var API = newAPI()
 
 // SetDebug - enable/disable debug messages logging
 func SetDebug(debug bool) {
-	DEBUG = debug
 	API.DEBUG = debug
 }
 
 func newBot() *VKBot {
 	return &VKBot{
-		msgRoutes:      make(map[string]func(*Message) string),
-		actionRoutes:   make(map[string]func(*Message) string),
-		markedMessages: make(map[int]*Message)}
+		msgRoutes:        make(map[string]func(*Message) string),
+		actionRoutes:     make(map[string]func(*Message) string),
+		markedMessages:   make(map[int]*Message),
+		lastUserMessages: make(map[int]int),
+		lastChatMessages: make(map[int]int),
+	}
 }
 
 func newAPI() *VkAPI {
@@ -59,9 +69,14 @@ func SetToken(token string) {
 	API.Token = token
 }
 
+// SetAutoFriend - enables mutual auto friending
+func SetAutoFriend(af bool) {
+	bot.autoFriend = af
+}
+
 // SetAPI - setup API config
 func SetAPI(token string, url string, ver string) {
-	API.Token = token
+	SetToken(token)
 	if url != "" {
 		API.URL = url
 	}
@@ -71,11 +86,15 @@ func SetAPI(token string, url string, ver string) {
 }
 
 // HandleMessage - add substr message handler
+// Function must return string to reply or "" (if no reply)
+// You can use m.Reply(string), if need more replies in handler
 func HandleMessage(command string, handler func(*Message) string) {
 	bot.msgRoutes[command] = handler
 }
 
 // HandleAction - add action handler
+// Function must return string to reply or "" (if no reply)
+// You can use m.Reply(string), if need more replies in handler
 func HandleAction(command string, handler func(*Message) string) {
 	bot.actionRoutes[command] = handler
 }
@@ -129,77 +148,111 @@ func sendError(msg *Message, err error) {
 
 }
 
+//RouteAction routes an action
+func RouteAction(m *Message) (err error) {
+	if m.Action != "" {
+		if API.DEBUG {
+			log.Printf(m.Action)
+		}
+		for k, v := range bot.actionRoutes {
+			if m.Action == k {
+				bot.markedMessages[m.ID] = m
+				if API.DEBUG {
+					log.Printf("action matched: %+v\n", m.Action)
+				}
+				msg := v(m)
+				if msg != "" {
+					err = m.Reply(msg)
+					if err != nil {
+						return err
+					}
+				}
+			}
+		}
+	}
+	return nil
+}
+
+// RouteMessages routes single message
+func RouteMessage(m *Message) (err error) {
+	message := strings.TrimSpace(strings.ToLower(m.Body))
+	if strings.HasPrefix(message, "/ ") {
+		message = "/" + strings.TrimPrefix(message, "/ ")
+	}
+	if m.Action != "" {
+		err = RouteAction(m)
+		if err != nil {
+			return err
+		}
+	} else {
+		marked := false
+		for k, v := range bot.msgRoutes {
+			if strings.HasPrefix(message, k) {
+				msg := v(m)
+				if msg != "" {
+					err = m.Reply(msg)
+					if err != nil {
+						return err
+					}
+					marked = true
+					_, ok := bot.markedMessages[m.ID]
+					if ok {
+						delete(bot.markedMessages, m.ID)
+					}
+				} else {
+					if !marked {
+						bot.markedMessages[m.ID] = m
+					}
+				}
+			}
+		}
+	}
+	return nil
+}
+
+// RouteMessages routes inbound messages
+func RouteMessages(messages []*Message) {
+	var err error
+	for _, m := range messages {
+		//if m.ID <= bot.LastMsg {
+		//	break
+		//}
+		if m.ReadState == 0 {
+			err = RouteMessage(m)
+			if err != nil {
+				sendError(m, err)
+			}
+		}
+	}
+}
+
 // Listen - start server
 func Listen(token string, url string, ver string, adminID int) {
 	SetAPI(token, url, ver)
 	API.AdminID = adminID
 	API.UID = API.Me().ID
 
+
 	go friendReceiver()
 
 	c := time.Tick(3 * time.Second)
-	for _ = range c {
+	for range c {
 		bot.markedMessages = make(map[int]*Message)
 		messages, err := getMessages()
 		if err != nil {
 			sendError(nil, err)
 		}
-		for _, m := range messages {
-			//if m.ID <= bot.LastMsg {
-			//	break
-			//}
-			if m.ReadState == 0 {
-				message := strings.TrimSpace(strings.ToLower(m.Body))
-				if strings.HasPrefix(message, "/ ") {
-					message = "/" + strings.TrimPrefix(message, "/ ")
-				}
-				if m.Action != "" {
-					log.Printf(m.Action)
-					for k, v := range bot.actionRoutes {
-						if m.Action == k {
-							bot.markedMessages[m.ID] = m
-							log.Printf("success")
-							msg := v(m)
-							if msg != "" {
-								err = m.Reply(msg)
-								if err != nil {
-									sendError(m, err)
-								}
-							}
-						}
-					}
-				} else {
-					marked := false
-					for k, v := range bot.msgRoutes {
-						if strings.HasPrefix(message, k) {
-							msg := v(m)
-							if msg != "" {
-								err = m.Reply(msg)
-								if err != nil {
-									sendError(m, err)
-								}
-								marked = true
-								_, ok := bot.markedMessages[m.ID]
-								if ok {
-									delete(bot.markedMessages, m.ID)
-								}
-							} else {
-								if !marked {
-									bot.markedMessages[m.ID] = m
-								}
-							}
-						}
-					}
-				}
-			}
-		}
+		RouteMessages(messages)
+
 		for _, m := range bot.markedMessages {
 			m.MarkAsRead()
 		}
 	}
 }
 
-func checkFriends() {
+
+// CheckFriends checking friend invites and mathes and deletes mutual
+func CheckFriends() {
 	uids := API.GetFriendRequests(false)
 	if len(uids) > 0 {
 		for _, uid := range uids {
@@ -227,10 +280,10 @@ func checkFriends() {
 }
 
 func friendReceiver() {
-	checkFriends()
+	CheckFriends()
 	c := time.Tick(30 * time.Second)
-	for _ = range c {
-		checkFriends()
+	for range c {
+		CheckFriends()
 	}
 }
 
