@@ -39,18 +39,28 @@ func errorHandler(m *govkbot.Message, err error) {
   log.Fatal(err.Error())
 }
 
-//govkbot.HandleMessage("/", anyHandler)
-//govkbot.HandleMessage("/me", meHandler)
-govkbot.HandleMessage("/help", helpHandler)
+func main() {
+    //govkbot.HandleMessage("/", anyHandler)
+    //govkbot.HandleMessage("/me", meHandler)
+    govkbot.HandleMessage("/help", helpHandler)
 
-//govkbot.HandleAction("chat_invite_user", inviteHandler)
-//govkbot.HandleAction("chat_kick_user", kickHandler)
-//govkbot.HandleAction("friend_add", addFriendHandler)
-//govkbot.HandleAction("friend_delete", deleteFriendHandler)
+    //govkbot.HandleAction("chat_invite_user", inviteHandler)
+    //govkbot.HandleAction("chat_kick_user", kickHandler)
+    //govkbot.HandleAction("friend_add", addFriendHandler)
+    //govkbot.HandleAction("friend_delete", deleteFriendHandler)
 
-govkbot.HandleError(errorHandler)
+    govkbot.HandleError(errorHandler)
 
-bovkbot.SetDebug(true)
+    govkbot.SetAutoFriend(true) // enable auto accept/delete friends
 
-govkbot.Listen(VKToken, "", "", VKAdminID)
+    govkbot.SetDebug(true) // log debug messages
+
+    // Optional Direct VK API access
+    govkbot.SetAPI(VKToken, "", "") // Need only before Listen, if you use direct API
+    me := govkbot.API.Me() // call API method
+    log.Printf("current user: %+v\n", me.FullName())
+    // Optional end
+
+    govkbot.Listen(VKToken, "", "", VKAdminID)
+}
 ```
