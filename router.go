@@ -244,7 +244,7 @@ func Listen(token string, url string, ver string, adminID int) {
 
 // CheckFriends checking friend invites and mathes and deletes mutual
 func CheckFriends() {
-	uids := API.GetFriendRequests(false)
+	uids, _ := API.GetFriendRequests(false)
 	if len(uids) > 0 {
 		for _, uid := range uids {
 			API.AddFriend(uid)
@@ -256,7 +256,7 @@ func CheckFriends() {
 			}
 		}
 	}
-	uids = API.GetFriendRequests(true)
+	uids, _ = API.GetFriendRequests(true)
 	if len(uids) > 0 {
 		for _, uid := range uids {
 			API.DeleteFriend(uid)

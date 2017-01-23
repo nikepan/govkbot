@@ -32,6 +32,10 @@ func (api *VkAPI) Call(method string, parameters url.Values) ([]byte, error) {
 	parameters.Add("access_token", api.Token)
 	parameters.Add("v", api.Ver)
 
+	if api.URL == "test" {
+		content, err := ioutil.ReadFile("./mocks/"+method+".json")
+		return content, err
+	}
 	resp, err := http.PostForm(api.URL+method, parameters)
 	if err != nil {
 		log.Println(err.Error())
@@ -83,8 +87,10 @@ func (api *VkAPI) Me() *User {
 	}
 	u := UsersResponse{}
 	json.Unmarshal(buf, &u)
-
-	return u.Response[0]
+	if len(u.Response) > 0 {
+		return u.Response[0]
+	}
+	return &User{}
 }
 
 // GetChatInfo - returns Chat info by id
@@ -102,12 +108,15 @@ func (api *VkAPI) GetChatInfo(chatID int) (*ChatInfo, *VKError) {
 }
 
 // GetChatUsers - get chat users
-func (api *VkAPI) GetChatUsers(chatID int) []*User {
+func (api *VkAPI) GetChatUsers(chatID int) (users []*User, err error) {
 	p := url.Values{}
 	p.Add("chat_id", strconv.Itoa(chatID))
 	p.Add("fields", "photo")
 
-	buf, _ := api.Call("messages.getChatUsers", p)
+	buf, err := api.Call("messages.getChatUsers", p)
+	if err != nil {
+		return nil, err
+	}
 
 	if api.DEBUG {
 		log.Printf("users: %+v\n", string(buf))
@@ -115,21 +124,21 @@ func (api *VkAPI) GetChatUsers(chatID int) []*User {
 	u := UsersResponse{}
 	json.Unmarshal(buf, &u)
 
-	return u.Response
+	return u.Response, nil
 }
 
 // GetFriendRequests - get friend requests
-func (api *VkAPI) GetFriendRequests(out bool) []int {
+func (api *VkAPI) GetFriendRequests(out bool) (friends []int, err error) {
 	p := url.Values{}
 	if out {
 		p.Add("out", "1")
 	}
 
-	buf, _ := api.Call("friends.getRequests", p)
+	buf, err := api.Call("friends.getRequests", p)
 	u := FriendRequestsResponse{}
 	json.Unmarshal(buf, &u)
 
-	return u.Response.Items
+	return u.Response.Items, err
 }
 
 // AddFriend - add friend
@@ -157,28 +166,32 @@ func (api *VkAPI) DeleteFriend(uid int) bool {
 }
 
 // User - get simple user info
-func (api *VkAPI) User(uid int) (User, bool) {
+func (api *VkAPI) User(uid int) (*User, error) {
 	p := url.Values{}
 	p.Add("user_ids", strconv.Itoa(uid))
 	p.Add("fields", "sex")
 
-	buf, _ := api.Call("users.get", p)
+	buf, err := api.Call("users.get", p)
+	if err != nil {
+		return nil, err
+	}
 
 	u := UsersResponse{}
 	json.Unmarshal(buf, &u)
 	if len(u.Response) > 0 {
-		return *u.Response[0], true
+		return u.Response[0], nil
 	}
-	return User{}, false
+	return &User{}, errors.New("no users returned")
 }
 
 // MarkAsRead - mark message as read
-func (m Message) MarkAsRead() {
+func (m Message) MarkAsRead() (err error) {
 
 	p := url.Values{}
 	p.Add("message_ids", strconv.Itoa(m.ID))
 
-	_, _ = API.Call("messages.markAsRead", p)
+	_, err = API.Call("messages.markAsRead", p)
+	return err
 
 }
 

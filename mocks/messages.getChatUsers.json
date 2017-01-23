@@ -1,0 +1,21 @@
+{
+  "response": [{
+    "id": 1,
+    "first_name": "Denis",
+    "last_name": "Shevtsov",
+    "photo": "http://cs410918.v...861/5s42QydZ6_0.jpg",
+    "invited_by": 1
+  }, {
+    "id": 2,
+    "first_name": "Olga",
+    "last_name": "Lysenko",
+    "photo": "http://cs10742.vk...5945/e_54379a30.jpg",
+    "invited_by": 1
+  }, {
+    "id": 3,
+    "first_name": "Irina",
+    "last_name": "Denezhkina",
+    "photo": "http://cs11432.vk...57e/iVy-cd362Yg.jpg",
+    "invited_by": 1
+  }]
+}

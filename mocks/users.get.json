@@ -1,0 +1,13 @@
+{
+  "response": [{
+    "id": 1,
+    "first_name": "First",
+    "last_name": "Last",
+    "city": {
+      "id": 1,
+      "title": "Moscow"
+    },
+    "photo_50": "",
+    "verified": 0
+  }]
+}

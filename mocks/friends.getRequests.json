@@ -1,0 +1,9 @@
+{
+  "response": [1, {
+    "uid": 1,
+    "mutual": {
+      "count": 2,
+      "users": [1, 2]
+    }
+  }]
+}
