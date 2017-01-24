@@ -34,7 +34,7 @@ package main
 import "github.com/nikepan/govkbot"
 import "log"
 
-var VKAdminID = "3759927"
+var VKAdminID = 3759927
 var VKToken = "efjr98j9fj8jf4j958jj4985jfj9joijerf0fj548jf94jfiroefije495jf48"
 
 func helpHandler(m *govkbot.Message) (reply string) {
