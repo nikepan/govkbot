@@ -171,10 +171,12 @@ func (api *VkAPI) DeleteFriend(uid int) bool {
 	p.Add("user_id", strconv.Itoa(uid))
 
 	buf, _ := api.Call(API_FRIENDS_DELETE, p)
-	u := SimpleResponse{}
+	u := FriendDeleteResponse{}
 	json.Unmarshal(buf, &u)
 
-	return u.Response == 1
+	ok := u.Response["success"] == 1
+
+	return ok
 }
 
 // User - get simple user info

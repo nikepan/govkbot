@@ -155,7 +155,7 @@ func RouteAction(m *Message) (err error) {
 				}
 				msg := v(m)
 				if msg != "" {
-					err = m.Reply(msg)
+					_, err = m.Reply(msg)
 					if err != nil {
 						return err
 					}
@@ -183,7 +183,7 @@ func RouteMessage(m *Message) (err error) {
 			if strings.HasPrefix(message, k) {
 				msg := v(m)
 				if msg != "" {
-					err = m.Reply(msg)
+					_, err = m.Reply(msg)
 					if err != nil {
 						return err
 					}

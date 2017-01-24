@@ -1,9 +1,6 @@
 package govkbot
 
 import (
-	"encoding/json"
-	"log"
-	"os"
 	"strings"
 )
 
@@ -76,6 +73,12 @@ type FriendRequests struct {
 // FriendRequestsResponse - VK friend requests response
 type FriendRequestsResponse struct {
 	Response FriendRequests
+	Error    *VKError
+}
+
+// FriendDeleteResponse - VK friend delete response
+type FriendDeleteResponse struct {
+	Response map[string]int
 	Error    *VKError
 }
 
