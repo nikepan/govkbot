@@ -13,10 +13,10 @@ import (
 // @TODO replies from json files
 
 const (
-	VK_API_URL       = "https://api.vk.com/method/"
-	VK_API_VER       = "5.52"
-	MESSAGES_COUNT   = 200
-	REQUEST_INTERVAL = 400 // 3 requests per second VK limit
+	vkAPIURL        = "https://api.vk.com/method/"
+	vkAPIVer        = "5.52"
+	messagesCount   = 200
+	requestInterval = 400 // 3 requests per second VK limit
 )
 
 // VKBot - bot config
@@ -56,10 +56,10 @@ func newBot() *VKBot {
 func newAPI() *VkAPI {
 	return &VkAPI{
 		Token:           "",
-		URL:             VK_API_URL,
-		Ver:             VK_API_VER,
-		MessagesCount:   MESSAGES_COUNT,
-		RequestInterval: REQUEST_INTERVAL,
+		URL:             vkAPIURL,
+		Ver:             vkAPIVer,
+		MessagesCount:   messagesCount,
+		RequestInterval: requestInterval,
 		DEBUG:           false,
 	}
 }
@@ -104,6 +104,7 @@ func HandleError(handler func(*Message, error)) {
 	bot.errorHandler = handler
 }
 
+// GetMessages - request unread messages from VK (more than 200)
 func GetMessages() ([]*Message, error) {
 	var allMessages []*Message
 	lastMsg := bot.LastMsg
@@ -174,23 +175,21 @@ func RouteMessage(m *Message) (replies []string, err error) {
 	if m.Action != "" {
 		replies, err = RouteAction(m)
 		return replies, err
-
-	} else {
-		marked := false
-		for k, v := range bot.msgRoutes {
-			if strings.HasPrefix(message, k) {
-				msg := v(m)
-				if msg != "" {
-					marked = true
-					_, ok := bot.markedMessages[m.ID]
-					if ok {
-						delete(bot.markedMessages, m.ID)
-					}
-					replies = append(replies, msg)
-				} else {
-					if !marked {
-						bot.markedMessages[m.ID] = m
-					}
+	}
+	marked := false
+	for k, v := range bot.msgRoutes {
+		if strings.HasPrefix(message, k) {
+			msg := v(m)
+			if msg != "" {
+				marked = true
+				_, ok := bot.markedMessages[m.ID]
+				if ok {
+					delete(bot.markedMessages, m.ID)
+				}
+				replies = append(replies, msg)
+			} else {
+				if !marked {
+					bot.markedMessages[m.ID] = m
 				}
 			}
 		}
@@ -218,6 +217,7 @@ func RouteMessages(messages []*Message) (result map[*Message][]string) {
 	return result
 }
 
+// MainRoute - main router func. Working cycle Listen.
 func MainRoute() {
 	bot.markedMessages = make(map[int]*Message)
 	messages, err := GetMessages()

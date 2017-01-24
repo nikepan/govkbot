@@ -23,15 +23,15 @@ type VkAPI struct {
 }
 
 const (
-	API_USERS_GET               = "users.get"
-	API_MESSAGES_GET            = "messages.get"
-	API_MESSAGES_GET_CHAT       = "messages.getChat"
-	API_MESSAGES_GET_CHAT_USERS = "messages.getChatUsers"
-	API_MESSAGES_SEND           = "messages.send"
-	API_MESSAGES_MARK_AS_READ   = "messages.markAsRead"
-	API_FRIENDS_GET_REQUESTS    = "friends.getRequests"
-	API_FRIENDS_ADD             = "friends.add"
-	API_FRIENDS_DELETE          = "friends.delete"
+	apiUsersGet             = "users.get"
+	apiMessagesGet          = "messages.get"
+	apiMessagesGetChat      = "messages.getChat"
+	apiMessagesGetChatUsers = "messages.getChatUsers"
+	apiMessagesSend         = "messages.send"
+	apiMessagesMarkAsRead   = "messages.markAsRead"
+	apiFriendsGetRequests   = "friends.getRequests"
+	apiFriendsAdd           = "friends.add"
+	apiFriendsDelete        = "friends.delete"
 )
 
 // Call - main api call method
@@ -65,14 +65,14 @@ func (api *VkAPI) Call(method string, parameters url.Values) ([]byte, error) {
 	return buf, nil
 }
 
-// GetMessages - get user messages
+// GetMessages - get user messages (up to 200)
 func (api *VkAPI) GetMessages(count int, offset int) (*Messages, error) {
 
 	p := url.Values{}
 	p.Add("count", strconv.Itoa(count))
 	p.Add("offset", strconv.Itoa(offset))
 
-	buf, _ := api.Call(API_MESSAGES_GET, p)
+	buf, _ := api.Call(apiMessagesGet, p)
 
 	m := MessagesResponse{}
 	json.Unmarshal(buf, &m)
@@ -87,7 +87,7 @@ func (api *VkAPI) GetMessages(count int, offset int) (*Messages, error) {
 func (api *VkAPI) Me() *User {
 	p := url.Values{}
 
-	buf, _ := api.Call(API_USERS_GET, p)
+	buf, _ := api.Call(apiUsersGet, p)
 	debugPrint("me: %+v\n", string(buf))
 
 	u := UsersResponse{}
@@ -103,7 +103,7 @@ func (api *VkAPI) GetChatInfo(chatID int) (*ChatInfo, *VKError) {
 	p := url.Values{}
 	p.Add("chat_id", strconv.Itoa(chatID))
 	p.Add("fields", "photo,city,country")
-	buf, _ := api.Call(API_MESSAGES_GET_CHAT, p)
+	buf, _ := api.Call(apiMessagesGetChat, p)
 	u := ChatInfoResponse{}
 	json.Unmarshal(buf, &u)
 	if u.Error != nil {
@@ -118,7 +118,7 @@ func (api *VkAPI) GetChatUsers(chatID int) (users []*User, err error) {
 	p.Add("chat_id", strconv.Itoa(chatID))
 	p.Add("fields", "photo")
 
-	buf, err := api.Call(API_MESSAGES_GET_CHAT_USERS, p)
+	buf, err := api.Call(apiMessagesGetChatUsers, p)
 	if err != nil {
 		return nil, err
 	}
@@ -137,7 +137,7 @@ func (api *VkAPI) GetFriendRequests(out bool) (friends []int, err error) {
 		p.Add("out", "1")
 	}
 
-	buf, err := api.Call(API_FRIENDS_GET_REQUESTS, p)
+	buf, err := api.Call(apiFriendsGetRequests, p)
 	u := FriendRequestsResponse{}
 	json.Unmarshal(buf, &u)
 
@@ -149,7 +149,7 @@ func (api *VkAPI) AddFriend(uid int) bool {
 	p := url.Values{}
 	p.Add("user_id", strconv.Itoa(uid))
 
-	buf, _ := api.Call(API_FRIENDS_ADD, p)
+	buf, _ := api.Call(apiFriendsAdd, p)
 	u := SimpleResponse{}
 	json.Unmarshal(buf, &u)
 
@@ -161,7 +161,7 @@ func (api *VkAPI) DeleteFriend(uid int) bool {
 	p := url.Values{}
 	p.Add("user_id", strconv.Itoa(uid))
 
-	buf, _ := api.Call(API_FRIENDS_DELETE, p)
+	buf, _ := api.Call(apiFriendsDelete, p)
 	u := FriendDeleteResponse{}
 	json.Unmarshal(buf, &u)
 
@@ -176,7 +176,7 @@ func (api *VkAPI) User(uid int) (*User, error) {
 	p.Add("user_ids", strconv.Itoa(uid))
 	p.Add("fields", "sex")
 
-	buf, err := api.Call(API_USERS_GET, p)
+	buf, err := api.Call(apiUsersGet, p)
 	if err != nil {
 		return nil, err
 	}
@@ -195,7 +195,7 @@ func (m Message) MarkAsRead() (err error) {
 	p := url.Values{}
 	p.Add("message_ids", strconv.Itoa(m.ID))
 
-	_, err = API.Call(API_MESSAGES_MARK_AS_READ, p)
+	_, err = API.Call(apiMessagesMarkAsRead, p)
 	return err
 
 }
@@ -205,7 +205,7 @@ func (api *VkAPI) SendChatMessage(chatID int, msg string) (err error) {
 	p := url.Values{}
 	p.Add("chat_id", strconv.Itoa(chatID))
 	p.Add("message", msg)
-	_, err = api.Call(API_MESSAGES_SEND, p)
+	_, err = api.Call(apiMessagesSend, p)
 	return err
 }
 
@@ -214,7 +214,7 @@ func (api *VkAPI) SendMessage(userID int, msg string) (err error) {
 	p := url.Values{}
 	p.Add("user_id", strconv.Itoa(userID))
 	p.Add("message", msg)
-	_, err = api.Call(API_MESSAGES_SEND, p)
+	_, err = api.Call(apiMessagesSend, p)
 	return err
 }
 
@@ -229,7 +229,7 @@ func (m Message) Reply(msg string) (id int, err error) {
 	//p.Add("forward_messages", strconv.Itoa(m.ID))
 	p.Add("message", msg)
 
-	buf, err := API.Call(API_MESSAGES_SEND, p)
+	buf, err := API.Call(apiMessagesSend, p)
 	r := SimpleResponse{}
 	json.Unmarshal(buf, &r)
 

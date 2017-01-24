@@ -2,12 +2,12 @@ package govkbot
 
 import "log"
 
-func IsDebugging() bool {
+func isDebugging() bool {
 	return API.DEBUG
 }
 
 func debugPrint(format string, values ...interface{}) {
-	if IsDebugging() {
+	if isDebugging() {
 		log.Printf("[VKBOT-DEBUG] "+format, values...)
 	}
 }

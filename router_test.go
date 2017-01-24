@@ -74,7 +74,7 @@ func TestRouteMessage(t *testing.T) {
 		t.Error(err.Error())
 	}
 	if replies[0] != "/help" {
-		t.Error(WRONG_VALUE_RETURNED)
+		t.Error(wrongValueReturned)
 	}
 }
 
@@ -87,14 +87,14 @@ func TestRouteAction(t *testing.T) {
 		t.Error(err.Error())
 	}
 	if replies[0] != "ok" {
-		t.Error(WRONG_VALUE_RETURNED)
+		t.Error(wrongValueReturned)
 	}
 }
 
 func TestRouteMessages(t *testing.T) {
 	HandleMessage("/help", baseHandler)
 	SetAPI("", "test", "")
-	messages := make([]*Message, 0)
+	var messages []*Message
 	m1 := Message{Body: "/help"}
 	messages = append(messages, &m1)
 	m2 := Message{Action: "friend_add", Body: "ok"}
@@ -104,10 +104,10 @@ func TestRouteMessages(t *testing.T) {
 	replies := RouteMessages(messages)
 
 	if replies[&m1][0] != "/help" {
-		t.Error(WRONG_VALUE_RETURNED)
+		t.Error(wrongValueReturned)
 	}
 	if replies[&m2][0] != "ok" {
-		t.Error(WRONG_VALUE_RETURNED)
+		t.Error(wrongValueReturned)
 	}
 }
 
@@ -128,7 +128,7 @@ func TestCheckFriends(t *testing.T) {
 }
 
 func TestMainRoute(t *testing.T) {
-	SetAPI("", VK_API_URL, "")
+	SetAPI("", vkAPIURL, "")
 	HandleError(errorHandler)
 	MainRoute()
 }

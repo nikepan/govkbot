@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	WRONG_VALUE_RETURNED = "Wrong value returned"
+	wrongValueReturned = "Wrong value returned"
 )
 
 func TestCall(t *testing.T) {
@@ -89,7 +89,7 @@ func TestVkAPI_AddFriend(t *testing.T) {
 	SetAPI("", "test", "")
 	ok := API.AddFriend(1)
 	if !ok {
-		t.Error(WRONG_VALUE_RETURNED)
+		t.Error(wrongValueReturned)
 	}
 }
 
@@ -97,7 +97,7 @@ func TestVkAPI_DeleteFriend(t *testing.T) {
 	SetAPI("", "test", "")
 	ok := API.DeleteFriend(1)
 	if !ok {
-		t.Error(WRONG_VALUE_RETURNED)
+		t.Error(wrongValueReturned)
 	}
 }
 
@@ -118,7 +118,7 @@ func TestMessage_Reply(t *testing.T) {
 		t.Error(err.Error())
 	}
 	if mid == 0 {
-		t.Error(WRONG_VALUE_RETURNED)
+		t.Error(wrongValueReturned)
 	}
 	m = Message{ChatID: 1}
 	mid, err = m.Reply("ok")
@@ -126,7 +126,7 @@ func TestMessage_Reply(t *testing.T) {
 		t.Error(err.Error())
 	}
 	if mid == 0 {
-		t.Error(WRONG_VALUE_RETURNED)
+		t.Error(wrongValueReturned)
 	}
 }
 
@@ -153,7 +153,7 @@ func TestVkAPI_User(t *testing.T) {
 		t.Error(err.Error())
 	}
 	if u.ID == 0 {
-		t.Error(WRONG_VALUE_RETURNED)
+		t.Error(wrongValueReturned)
 	}
 }
 
