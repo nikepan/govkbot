@@ -1,10 +1,10 @@
 package govkbot
 
 import (
-	"strings"
-	"os"
 	"encoding/json"
 	"log"
+	"os"
+	"strings"
 )
 
 // Message - VK message struct
@@ -53,7 +53,7 @@ type User struct {
 // FullName - returns full name of user
 func (u *User) FullName() string {
 	if u != nil {
-		return strings.Trim(u.FirstName + " " + u.LastName, " ")
+		return strings.Trim(u.FirstName+" "+u.LastName, " ")
 	}
 	return ""
 }
@@ -115,14 +115,3 @@ func (err *VKError) Error() string {
 func (a VKUsers) Len() int           { return len(a) }
 func (a VKUsers) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a VKUsers) Less(i, j int) bool { return a[i].FullName() < a[j].FullName() }
-
-
-func readJSON(fn string, v interface{}) {
-	file, _ := os.Open(fn)
-	defer file.Close()
-	decoder := json.NewDecoder(file)
-	err := decoder.Decode(v)
-	if err != nil {
-		log.Println("error:", err)
-	}
-}

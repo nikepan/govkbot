@@ -1,7 +1,7 @@
 package govkbot
 
 import (
-"testing"
+	"testing"
 )
 
 func baseHandler(m *Message) (reply string) {
