@@ -144,15 +144,10 @@ func sendError(msg *Message, err error) {
 //RouteAction routes an action
 func RouteAction(m *Message) (err error) {
 	if m.Action != "" {
-		if API.DEBUG {
-			log.Printf(m.Action)
-		}
+		debugPrint("route action: %+v\n", m.Action)
 		for k, v := range bot.actionRoutes {
 			if m.Action == k {
 				bot.markedMessages[m.ID] = m
-				if API.DEBUG {
-					log.Printf("action matched: %+v\n", m.Action)
-				}
 				msg := v(m)
 				if msg != "" {
 					_, err = m.Reply(msg)

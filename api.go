@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -38,9 +37,7 @@ const (
 // Call - main api call method
 func (api *VkAPI) Call(method string, parameters url.Values) ([]byte, error) {
 	p := "?" + parameters.Encode()
-	if api.DEBUG {
-		log.Printf("vk req: %+v\n", api.URL+method+p)
-	}
+	debugPrint("vk req: %+v\n", api.URL+method+p)
 	parameters.Add("access_token", api.Token)
 	parameters.Add("v", api.Ver)
 
@@ -50,20 +47,18 @@ func (api *VkAPI) Call(method string, parameters url.Values) ([]byte, error) {
 	}
 	resp, err := http.PostForm(api.URL+method, parameters)
 	if err != nil {
-		log.Println(err.Error())
+		debugPrint("%+v\n", err.Error())
 		time.Sleep(time.Duration(time.Millisecond * time.Duration(api.RequestInterval)))
 		return nil, err
 	}
 	buf, _ := ioutil.ReadAll(resp.Body)
 	time.Sleep(time.Duration(time.Millisecond * time.Duration(api.RequestInterval)))
-	if api.DEBUG {
-		log.Printf("vk resp: %+v\n", string(buf))
-	}
+	debugPrint("vk resp: %+v\n", string(buf))
 
 	u := SimpleResponse{}
 	json.Unmarshal(buf, &u)
 	if u.Error != nil {
-		log.Printf("%+v\n", u.Error.ErrorMsg)
+		debugPrint("%+v\n", u.Error.ErrorMsg)
 		return buf, errors.New(u.Error.ErrorMsg)
 	}
 
@@ -93,16 +88,14 @@ func (api *VkAPI) Me() *User {
 	p := url.Values{}
 
 	buf, _ := api.Call(API_USERS_GET, p)
+	debugPrint("me: %+v\n", string(buf))
 
-	if api.DEBUG {
-		log.Printf("me: %+v\n", string(buf))
-	}
 	u := UsersResponse{}
 	json.Unmarshal(buf, &u)
 	if len(u.Response) > 0 {
 		return u.Response[0]
 	}
-	return &User{}
+	return nil
 }
 
 // GetChatInfo - returns Chat info by id
@@ -130,9 +123,7 @@ func (api *VkAPI) GetChatUsers(chatID int) (users []*User, err error) {
 		return nil, err
 	}
 
-	if api.DEBUG {
-		log.Printf("users: %+v\n", string(buf))
-	}
+	debugPrint("users: %+v\n", string(buf))
 	u := UsersResponse{}
 	json.Unmarshal(buf, &u)
 
