@@ -12,6 +12,13 @@ import (
 // @TODO long pooling
 // @TODO replies from json files
 
+const (
+	VK_API_URL = "https://api.vk.com/method/"
+	VK_API_VER = "5.52"
+	MESSAGES_COUNT = 200
+	REQUEST_INTERVAL = 400 // 3 requests per second VK limit
+)
+
 // VKBot - bot config
 type VKBot struct {
 	msgRoutes        map[string]func(*Message) string
@@ -49,10 +56,10 @@ func newBot() *VKBot {
 func newAPI() *VkAPI {
 	return &VkAPI{
 		Token:           "",
-		URL:             "https://api.vk.com/method/",
-		Ver:             "5.52",
-		MessagesCount:   200,
-		RequestInterval: 400, // 3 requests per second VK limit
+		URL:             VK_API_URL,
+		Ver:             VK_API_VER,
+		MessagesCount:   MESSAGES_COUNT,
+		RequestInterval: REQUEST_INTERVAL,
 		DEBUG:           false,
 	}
 }
@@ -211,6 +218,29 @@ func RouteMessages(messages []*Message) (result map[*Message][]string) {
 	return result
 }
 
+func MainRoute() {
+	bot.markedMessages = make(map[int]*Message)
+	messages, err := GetMessages()
+	if err != nil {
+		sendError(nil, err)
+	}
+	replies := RouteMessages(messages)
+	for m, msgs := range replies {
+		for _, msg := range msgs {
+			if msg != "" {
+				_, err = m.Reply(msg)
+				if err != nil {
+					sendError(m, err)
+				}
+			}
+		}
+	}
+
+	for _, m := range bot.markedMessages {
+		m.MarkAsRead()
+	}
+}
+
 // Listen - start server
 func Listen(token string, url string, ver string, adminID int) {
 	SetAPI(token, url, ver)
@@ -221,26 +251,7 @@ func Listen(token string, url string, ver string, adminID int) {
 
 	c := time.Tick(3 * time.Second)
 	for range c {
-		bot.markedMessages = make(map[int]*Message)
-		messages, err := GetMessages()
-		if err != nil {
-			sendError(nil, err)
-		}
-		replies := RouteMessages(messages)
-		for m, msgs := range replies {
-			for _, msg := range msgs {
-				if msg != "" {
-					_, err = m.Reply(msg)
-					if err != nil {
-						sendError(m, err)
-					}
-				}
-			}
-		}
-
-		for _, m := range bot.markedMessages {
-			m.MarkAsRead()
-		}
+		MainRoute()
 	}
 }
 

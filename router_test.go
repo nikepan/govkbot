@@ -99,6 +99,8 @@ func TestRouteMessages(t *testing.T) {
 	messages = append(messages, &m1)
 	m2 := Message{Action: "friend_add", Body: "ok"}
 	messages = append(messages, &m2)
+	m3 := Message{Body: "skip"}
+	messages = append(messages, &m3)
 	replies := RouteMessages(messages)
 
 	if replies[&m1][0] != "/help" {
@@ -123,4 +125,10 @@ func TestGetMessages(t *testing.T) {
 func TestCheckFriends(t *testing.T) {
 	SetAPI("", "test", "")
 	CheckFriends()
+}
+
+func TestMainRoute(t *testing.T) {
+	SetAPI("", VK_API_URL, "")
+	HandleError(errorHandler)
+	MainRoute()
 }
