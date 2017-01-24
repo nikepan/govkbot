@@ -58,9 +58,9 @@ func kickHandler(m *govkbot.Message) (reply string) {
 }
 
 func greetUser(uid int) (reply string) {
-	u, ok := govkbot.API.User(uid)
-	if ok {
-		reply = fmt.Sprintf("Hello, %+v %+v", u.FirstName, u.LastName)
+	u, err := govkbot.API.User(uid)
+	if err == nil {
+		reply = fmt.Sprintf("Hello, %+v", u.FullName())
 	}
 	return reply
 }

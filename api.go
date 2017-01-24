@@ -186,7 +186,7 @@ func (api *VkAPI) User(uid int) (*User, error) {
 	if len(u.Response) > 0 {
 		return u.Response[0], nil
 	}
-	return &User{}, errors.New("no users returned")
+	return nil, errors.New("no users returned")
 }
 
 // MarkAsRead - mark message as read

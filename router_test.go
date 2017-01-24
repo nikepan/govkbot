@@ -69,18 +69,58 @@ func TestRouteMessage(t *testing.T) {
 	HandleMessage("/help", baseHandler)
 	SetAPI("", "test", "")
 	m := Message{Body: "/help"}
-	err := RouteMessage(&m)
+	replies, err := RouteMessage(&m)
 	if err != nil {
 		t.Error(err.Error())
+	}
+	if replies[0] != "/help" {
+		t.Error(WRONG_VALUE_RETURNED)
 	}
 }
 
 func TestRouteAction(t *testing.T) {
 	HandleAction("friend_add", baseHandler)
 	SetAPI("", "test", "")
-	m := Message{Body: ""}
-	err := RouteAction(&m)
+	m := Message{Action: "friend_add", Body: "ok"}
+	replies, err := RouteAction(&m)
 	if err != nil {
 		t.Error(err.Error())
 	}
+	if replies[0] != "ok" {
+		t.Error(WRONG_VALUE_RETURNED)
+	}
+}
+
+func TestRouteMessages(t *testing.T) {
+	HandleMessage("/help", baseHandler)
+	SetAPI("", "test", "")
+	messages := make([]*Message, 0)
+	m1 := Message{Body: "/help"}
+	messages = append(messages, &m1)
+	m2 := Message{Action: "friend_add", Body: "ok"}
+	messages = append(messages, &m2)
+	replies := RouteMessages(messages)
+
+	if replies[&m1][0] != "/help" {
+		t.Error(WRONG_VALUE_RETURNED)
+	}
+	if replies[&m2][0] != "ok" {
+		t.Error(WRONG_VALUE_RETURNED)
+	}
+}
+
+func TestGetMessages(t *testing.T) {
+	SetAPI("", "test", "")
+	messages, err := GetMessages()
+	if err != nil {
+		t.Error(err.Error())
+	}
+	if len(messages) == 0 {
+		t.Error("No messages")
+	}
+}
+
+func TestCheckFriends(t *testing.T) {
+	SetAPI("", "test", "")
+	CheckFriends()
 }

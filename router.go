@@ -97,7 +97,7 @@ func HandleError(handler func(*Message, error)) {
 	bot.errorHandler = handler
 }
 
-func getMessages() ([]*Message, error) {
+func GetMessages() ([]*Message, error) {
 	var allMessages []*Message
 	lastMsg := bot.LastMsg
 	offset := 0
@@ -142,7 +142,7 @@ func sendError(msg *Message, err error) {
 }
 
 //RouteAction routes an action
-func RouteAction(m *Message) (err error) {
+func RouteAction(m *Message) (replies []string, err error) {
 	if m.Action != "" {
 		debugPrint("route action: %+v\n", m.Action)
 		for k, v := range bot.actionRoutes {
@@ -150,43 +150,36 @@ func RouteAction(m *Message) (err error) {
 				bot.markedMessages[m.ID] = m
 				msg := v(m)
 				if msg != "" {
-					_, err = m.Reply(msg)
-					if err != nil {
-						return err
-					}
+					replies = append(replies, msg)
 				}
 			}
 		}
 	}
-	return nil
+	return replies, nil
 }
 
 // RouteMessage routes single message
-func RouteMessage(m *Message) (err error) {
+func RouteMessage(m *Message) (replies []string, err error) {
 	message := strings.TrimSpace(strings.ToLower(m.Body))
 	if strings.HasPrefix(message, "/ ") {
 		message = "/" + strings.TrimPrefix(message, "/ ")
 	}
 	if m.Action != "" {
-		err = RouteAction(m)
-		if err != nil {
-			return err
-		}
+		replies, err = RouteAction(m)
+		return replies, err
+
 	} else {
 		marked := false
 		for k, v := range bot.msgRoutes {
 			if strings.HasPrefix(message, k) {
 				msg := v(m)
 				if msg != "" {
-					_, err = m.Reply(msg)
-					if err != nil {
-						return err
-					}
 					marked = true
 					_, ok := bot.markedMessages[m.ID]
 					if ok {
 						delete(bot.markedMessages, m.ID)
 					}
+					replies = append(replies, msg)
 				} else {
 					if !marked {
 						bot.markedMessages[m.ID] = m
@@ -195,23 +188,27 @@ func RouteMessage(m *Message) (err error) {
 			}
 		}
 	}
-	return nil
+	return replies, nil
 }
 
 // RouteMessages routes inbound messages
-func RouteMessages(messages []*Message) {
-	var err error
+func RouteMessages(messages []*Message) (result map[*Message][]string) {
+	result = make(map[*Message][]string)
 	for _, m := range messages {
 		//if m.ID <= bot.LastMsg {
 		//	break
 		//}
 		if m.ReadState == 0 {
-			err = RouteMessage(m)
+			replies, err := RouteMessage(m)
 			if err != nil {
 				sendError(m, err)
 			}
+			if len(replies) > 0 {
+				result[m] = replies
+			}
 		}
 	}
+	return result
 }
 
 // Listen - start server
@@ -225,11 +222,21 @@ func Listen(token string, url string, ver string, adminID int) {
 	c := time.Tick(3 * time.Second)
 	for range c {
 		bot.markedMessages = make(map[int]*Message)
-		messages, err := getMessages()
+		messages, err := GetMessages()
 		if err != nil {
 			sendError(nil, err)
 		}
-		RouteMessages(messages)
+		replies := RouteMessages(messages)
+		for m, msgs := range replies {
+			for _, msg := range msgs {
+				if msg != "" {
+					_, err = m.Reply(msg)
+					if err != nil {
+						sendError(m, err)
+					}
+				}
+			}
+		}
 
 		for _, m := range bot.markedMessages {
 			m.MarkAsRead()
