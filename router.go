@@ -13,9 +13,9 @@ import (
 // @TODO replies from json files
 
 const (
-	VK_API_URL = "https://api.vk.com/method/"
-	VK_API_VER = "5.52"
-	MESSAGES_COUNT = 200
+	VK_API_URL       = "https://api.vk.com/method/"
+	VK_API_VER       = "5.52"
+	MESSAGES_COUNT   = 200
 	REQUEST_INTERVAL = 400 // 3 requests per second VK limit
 )
 

@@ -132,3 +132,11 @@ func TestMainRoute(t *testing.T) {
 	HandleError(errorHandler)
 	MainRoute()
 }
+
+func TestNotifyAdmin(t *testing.T) {
+	SetAPI("", "test", "")
+	err := NotifyAdmin("ok")
+	if err != nil {
+		t.Error(err.Error())
+	}
+}

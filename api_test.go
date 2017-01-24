@@ -2,10 +2,10 @@ package govkbot
 
 import (
 	"encoding/json"
+	"io/ioutil"
+	"log"
 	"net/url"
 	"testing"
-	"log"
-	"io/ioutil"
 )
 
 const (
@@ -32,7 +32,7 @@ func TestVkAPI_Call(t *testing.T) {
 	log.SetOutput(ioutil.Discard)
 	buf, err := api.Call("messages.get", url.Values{})
 	if err == nil {
-		t.Error("no error returned: "+string(buf))
+		t.Error("no error returned: " + string(buf))
 	}
 }
 
