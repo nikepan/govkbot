@@ -1,0 +1,24 @@
+{
+  "response": {
+    "id": 11,
+    "type": "chat",
+    "title": "hi all",
+    "admin_id": 1,
+    "users": [{
+      "id": 1,
+      "first_name": "First",
+      "last_name": "Last",
+      "city": {
+        "id": 1,
+        "title": "Moscow"
+      },
+      "country": {
+        "id": 1,
+        "title": "Russia"
+      },
+      "photo": "https://pp.vk.me/...39e/JQIpttMYiTU.jpg",
+      "invited_by": 1,
+      "type": "profile"
+    }]
+  }
+}

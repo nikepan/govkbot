@@ -38,13 +38,14 @@ type Geo struct {
 
 // User - simple VK user struct
 type User struct {
-	ID        int    `json:"id"`
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
-	Photo     string `json:"photo"`
-	InvitedBy int    `json:"invited_by"`
-	City      Geo    `json:"city"`
-	Country   Geo    `json:"country"`
+	ID         int    `json:"id"`
+	FirstName  string `json:"first_name"`
+	LastName   string `json:"last_name"`
+	ScreenName string `json:"screen_name"`
+	Photo      string `json:"photo"`
+	InvitedBy  int    `json:"invited_by"`
+	City       Geo    `json:"city"`
+	Country    Geo    `json:"country"`
 }
 
 // FullName - returns full name of user

@@ -14,7 +14,7 @@ type configuration struct {
 }
 
 func getMeMessage(uid int) (reply string) {
-	me := govkbot.API.Me()
+	me, _ := govkbot.API.Me()
 	return fmt.Sprintf("You: %+v %+v", me.FirstName, me.LastName)
 }
 

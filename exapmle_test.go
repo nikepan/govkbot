@@ -11,7 +11,7 @@ func helpHandler(m *govkbot.Message) (reply string) {
 }
 
 func errorHandler(msg *govkbot.Message, err error) {
-	log.Fatal(err.Error())
+	log.Fatal(err.Error(), msg.Body)
 }
 
 func addFriendHandler(m *govkbot.Message) (reply string) {
@@ -39,7 +39,7 @@ func ExampleListen() {
 
 	// Optional Direct VK API access
 	govkbot.SetAPI("!!!!VK_TOKEN!!!!", "", "") // Need only before Listen, if you use direct API
-	me := govkbot.API.Me()                     // call API method
+	me, _ := govkbot.API.Me()                  // call API method
 	log.Printf("current user: %+v\n", me.FullName())
 	// Optional end
 

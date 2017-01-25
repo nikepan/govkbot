@@ -10,6 +10,8 @@ import (
 	"time"
 )
 
+type H map[string]string
+
 // VkAPI - api config
 type VkAPI struct {
 	Token           string
@@ -35,11 +37,15 @@ const (
 )
 
 // Call - main api call method
-func (api *VkAPI) Call(method string, parameters url.Values) ([]byte, error) {
-	p := "?" + parameters.Encode()
-	debugPrint("vk req: %+v\n", api.URL+method+p)
-	parameters.Add("access_token", api.Token)
-	parameters.Add("v", api.Ver)
+func (api *VkAPI) Call(method string, params map[string]string) ([]byte, error) {
+	debugPrint("vk req: %+v params: %+v\n", api.URL+method, params)
+	params["access_token"] = api.Token
+	params["v"] = api.Ver
+
+	parameters := url.Values{}
+	for k, v := range params {
+		parameters.Add(k, v)
+	}
 
 	if api.URL == "test" {
 		content, err := ioutil.ReadFile("./mocks/" + method + ".json")
@@ -55,136 +61,131 @@ func (api *VkAPI) Call(method string, parameters url.Values) ([]byte, error) {
 	time.Sleep(time.Duration(time.Millisecond * time.Duration(api.RequestInterval)))
 	debugPrint("vk resp: %+v\n", string(buf))
 
-	u := SimpleResponse{}
-	json.Unmarshal(buf, &u)
-	if u.Error != nil {
-		debugPrint("%+v\n", u.Error.ErrorMsg)
-		return buf, errors.New(u.Error.ErrorMsg)
+	r := SimpleResponse{}
+	err = json.Unmarshal(buf, &r)
+	if err != nil {
+		return buf, errors.New("bad vk response: \"" + string(buf) + "\"")
+	}
+	if r.Error != nil {
+		debugPrint("%+v\n", r.Error.ErrorMsg)
+		return buf, errors.New(r.Error.ErrorMsg)
 	}
 
 	return buf, nil
 }
 
+func (api *VkAPI) CallMethod(method string, params map[string]string, result interface{}) error {
+	buf, err := api.Call(method, params)
+	if err != nil {
+		return errors.New(err.Error())
+	}
+	err = json.Unmarshal(buf, result)
+	if err != nil {
+		err = errors.New(err.Error())
+	}
+	return err
+}
+
 // GetMessages - get user messages (up to 200)
 func (api *VkAPI) GetMessages(count int, offset int) (*Messages, error) {
 
-	p := url.Values{}
-	p.Add("count", strconv.Itoa(count))
-	p.Add("offset", strconv.Itoa(offset))
-
-	buf, _ := api.Call(apiMessagesGet, p)
-
 	m := MessagesResponse{}
-	json.Unmarshal(buf, &m)
-	if m.Error != nil {
-		return &m.Response, errors.New(m.Error.ErrorMsg)
-	}
+	err := api.CallMethod(apiMessagesGet, H{
+		"count":  strconv.Itoa(count),
+		"offset": strconv.Itoa(offset),
+	}, &m)
 
-	return &m.Response, nil
+	return &m.Response, err
 }
 
 // Me - get current user info
-func (api *VkAPI) Me() *User {
-	p := url.Values{}
+func (api *VkAPI) Me() (*User, error) {
 
-	buf, _ := api.Call(apiUsersGet, p)
-	debugPrint("me: %+v\n", string(buf))
+	r := UsersResponse{}
+	err := api.CallMethod(apiUsersGet, H{"fields": "screen_name"}, &r)
 
-	u := UsersResponse{}
-	json.Unmarshal(buf, &u)
-	if len(u.Response) > 0 {
-		return u.Response[0]
+	if len(r.Response) > 0 {
+		debugPrint("me: %+v - %+v\n", r.Response[0].ID, r.Response[0].ScreenName)
+		return r.Response[0], err
 	}
-	return nil
+	return nil, err
 }
 
 // GetChatInfo - returns Chat info by id
-func (api *VkAPI) GetChatInfo(chatID int) (*ChatInfo, *VKError) {
-	p := url.Values{}
-	p.Add("chat_id", strconv.Itoa(chatID))
-	p.Add("fields", "photo,city,country")
-	buf, _ := api.Call(apiMessagesGetChat, p)
-	u := ChatInfoResponse{}
-	json.Unmarshal(buf, &u)
-	if u.Error != nil {
-		return nil, u.Error
-	}
-	return &u.Response, nil
+func (api *VkAPI) GetChatInfo(chatID int) (*ChatInfo, error) {
+	r := ChatInfoResponse{}
+	err := api.CallMethod(apiMessagesGetChat, H{
+		"chat_id": strconv.Itoa(chatID),
+		"fields":  "photo,city,country",
+	}, &r)
+
+	return &r.Response, err
 }
 
 // GetChatUsers - get chat users
 func (api *VkAPI) GetChatUsers(chatID int) (users []*User, err error) {
-	p := url.Values{}
-	p.Add("chat_id", strconv.Itoa(chatID))
-	p.Add("fields", "photo")
 
-	buf, err := api.Call(apiMessagesGetChatUsers, p)
-	if err != nil {
-		return nil, err
-	}
+	r := UsersResponse{}
+	err = api.CallMethod(apiMessagesGetChatUsers, H{
+		"chat_id": strconv.Itoa(chatID),
+		"fields":  "photo",
+	}, &r)
 
-	debugPrint("users: %+v\n", string(buf))
-	u := UsersResponse{}
-	json.Unmarshal(buf, &u)
-
-	return u.Response, nil
+	return r.Response, err
 }
 
 // GetFriendRequests - get friend requests
 func (api *VkAPI) GetFriendRequests(out bool) (friends []int, err error) {
-	p := url.Values{}
+	p := H{}
 	if out {
-		p.Add("out", "1")
+		p["out"] = "1"
 	}
 
-	buf, err := api.Call(apiFriendsGetRequests, p)
-	u := FriendRequestsResponse{}
-	json.Unmarshal(buf, &u)
+	r := FriendRequestsResponse{}
+	err = api.CallMethod(apiFriendsGetRequests, p, &r)
 
-	return u.Response.Items, err
+	return r.Response.Items, err
 }
 
 // AddFriend - add friend
 func (api *VkAPI) AddFriend(uid int) bool {
-	p := url.Values{}
-	p.Add("user_id", strconv.Itoa(uid))
 
-	buf, _ := api.Call(apiFriendsAdd, p)
-	u := SimpleResponse{}
-	json.Unmarshal(buf, &u)
+	r := SimpleResponse{}
+	err := api.CallMethod(apiFriendsAdd, H{"user_id": strconv.Itoa(uid)}, &r)
+	if err != nil {
+		return false
+	}
 
-	return u.Response == 1
+	return r.Response == 1
 }
 
 // DeleteFriend - delete friend
 func (api *VkAPI) DeleteFriend(uid int) bool {
-	p := url.Values{}
-	p.Add("user_id", strconv.Itoa(uid))
 
-	buf, _ := api.Call(apiFriendsDelete, p)
 	u := FriendDeleteResponse{}
-	json.Unmarshal(buf, &u)
+	err := api.CallMethod(apiFriendsDelete, H{"user_id": strconv.Itoa(uid)}, &u)
 
-	ok := u.Response["success"] == 1
+	if err != nil {
+		return false
+	}
 
-	return ok
+	return u.Response["success"] == 1
 }
 
 // User - get simple user info
 func (api *VkAPI) User(uid int) (*User, error) {
-	p := url.Values{}
-	p.Add("user_ids", strconv.Itoa(uid))
-	p.Add("fields", "sex")
 
-	buf, err := api.Call(apiUsersGet, p)
+	r := UsersResponse{}
+	err := api.CallMethod(apiUsersGet, H{
+		"user_ids": strconv.Itoa(uid),
+		"fields":   "sex,screen_name",
+	}, &r)
+
 	if err != nil {
 		return nil, err
 	}
-
-	u := UsersResponse{}
-	json.Unmarshal(buf, &u)
-	if len(u.Response) > 0 {
-		return u.Response[0], nil
+	if len(r.Response) > 0 {
+		return r.Response[0], err
 	}
 	return nil, errors.New("no users returned")
 }
@@ -192,54 +193,43 @@ func (api *VkAPI) User(uid int) (*User, error) {
 // MarkAsRead - mark message as read
 func (m Message) MarkAsRead() (err error) {
 
-	p := url.Values{}
-	p.Add("message_ids", strconv.Itoa(m.ID))
-
-	_, err = API.Call(apiMessagesMarkAsRead, p)
+	r := SimpleResponse{}
+	err = API.CallMethod(apiMessagesMarkAsRead, H{"message_ids": strconv.Itoa(m.ID)}, &r)
 	return err
-
 }
 
 //SendChatMessage sending a message to chat
-func (api *VkAPI) SendChatMessage(chatID int, msg string) (err error) {
-	p := url.Values{}
-	p.Add("chat_id", strconv.Itoa(chatID))
-	p.Add("message", msg)
-	_, err = api.Call(apiMessagesSend, p)
-	return err
+func (api *VkAPI) SendChatMessage(chatID int, msg string) (id int, err error) {
+	r := SimpleResponse{}
+	err = api.CallMethod(apiMessagesSend, H{
+		"chat_id": strconv.Itoa(chatID),
+		"message": msg,
+	}, &r)
+	return r.Response, err
 }
 
 //SendMessage sending a message to user
-func (api *VkAPI) SendMessage(userID int, msg string) (err error) {
-	p := url.Values{}
-	p.Add("user_id", strconv.Itoa(userID))
-	p.Add("message", msg)
-	_, err = api.Call(apiMessagesSend, p)
-	return err
+func (api *VkAPI) SendMessage(userID int, msg string) (id int, err error) {
+	r := SimpleResponse{}
+	err = api.CallMethod(apiMessagesSend, H{
+		"user_id": strconv.Itoa(userID),
+		"message": msg,
+	}, &r)
+	return r.Response, err
 }
 
 // Reply - reply message
 func (m Message) Reply(msg string) (id int, err error) {
-	p := url.Values{}
 	if m.ChatID != 0 {
-		p.Add("chat_id", strconv.Itoa(m.ChatID))
-	} else {
-		p.Add("user_id", strconv.Itoa(m.UserID))
+		return API.SendChatMessage(m.ChatID, msg)
 	}
-	//p.Add("forward_messages", strconv.Itoa(m.ID))
-	p.Add("message", msg)
-
-	buf, err := API.Call(apiMessagesSend, p)
-	r := SimpleResponse{}
-	json.Unmarshal(buf, &r)
-
-	return r.Response, err
+	return API.SendMessage(m.UserID, msg)
 }
 
 // NotifyAdmin - send notify to admin
 func (api *VkAPI) NotifyAdmin(msg string) (err error) {
 	if api.AdminID != 0 {
-		return api.SendMessage(api.AdminID, msg)
+		_, err = api.SendMessage(api.AdminID, msg)
 	}
-	return nil
+	return err
 }

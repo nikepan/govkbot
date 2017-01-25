@@ -1,10 +1,9 @@
 package govkbot
 
 import (
-	"encoding/json"
 	"io/ioutil"
 	"log"
-	"net/url"
+	"os"
 	"testing"
 )
 
@@ -13,16 +12,10 @@ const (
 )
 
 func TestCall(t *testing.T) {
-	api := API
-	buf, err := api.Call("utils.getServerTime", url.Values{})
+	r := SimpleResponse{}
+	err := API.CallMethod("utils.getServerTime", H{}, &r)
 	if err != nil {
-		t.Error("no response from VK")
-	}
-
-	m := SimpleResponse{}
-	json.Unmarshal(buf, &m)
-	if m.Error != nil {
-		t.Error(m.Error.Error())
+		t.Error(err.Error())
 	}
 }
 
@@ -30,7 +23,9 @@ func TestVkAPI_Call(t *testing.T) {
 	api := API
 	SetDebug(true)
 	log.SetOutput(ioutil.Discard)
-	buf, err := api.Call("messages.get", url.Values{})
+	buf, err := api.Call("messages.get", H{})
+	SetDebug(false)
+	log.SetOutput(os.Stdout)
 	if err == nil {
 		t.Error("no error returned: " + string(buf))
 	}
@@ -38,7 +33,10 @@ func TestVkAPI_Call(t *testing.T) {
 
 func TestVkAPI_Me(t *testing.T) {
 	SetAPI("", "test", "")
-	me := API.Me()
+	me, err := API.Me()
+	if err != nil {
+		t.Error(err.Error())
+	}
 	if me.FullName() != "First Last" {
 		t.Error(me.FullName())
 	}
@@ -132,7 +130,7 @@ func TestMessage_Reply(t *testing.T) {
 
 func TestVkAPI_SendChatMessage(t *testing.T) {
 	SetAPI("", "test", "")
-	err := API.SendChatMessage(1, "ok")
+	_, err := API.SendChatMessage(1, "ok")
 	if err != nil {
 		t.Error(err.Error())
 	}
@@ -140,7 +138,7 @@ func TestVkAPI_SendChatMessage(t *testing.T) {
 
 func TestVkAPI_SendMessage(t *testing.T) {
 	SetAPI("", "test", "")
-	err := API.SendMessage(1, "ok")
+	_, err := API.SendMessage(1, "ok")
 	if err != nil {
 		t.Error(err.Error())
 	}

@@ -245,7 +245,11 @@ func MainRoute() {
 func Listen(token string, url string, ver string, adminID int) {
 	SetAPI(token, url, ver)
 	API.AdminID = adminID
-	API.UID = API.Me().ID
+	u, err := API.Me()
+	if err != nil {
+		sendError(nil, err)
+	}
+	API.UID = u.ID
 
 	go friendReceiver()
 
