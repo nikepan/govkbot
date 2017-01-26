@@ -35,9 +35,11 @@ func TestNoJSON(t *testing.T) {
 	SetAPI("", "test", "")
 	r := SimpleResponse{}
 	err := API.CallMethod("nojson", H{}, &r)
-	log.Println(err)
 	if err == nil {
 		t.Error("no error returned")
+	}
+	if _, ok := err.(*ResponseError); !ok {
+		t.Error("wrong error type")
 	}
 }
 
@@ -47,6 +49,9 @@ func TestVkError(t *testing.T) {
 	err := API.CallMethod("vkerr", H{}, &r)
 	if err == nil {
 		t.Error("no error returned")
+	}
+	if _, ok := err.(*VKError); !ok {
+		t.Error("wrong error type")
 	}
 }
 

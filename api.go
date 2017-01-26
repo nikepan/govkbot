@@ -72,7 +72,7 @@ func (api *VkAPI) CallMethod(method string, params map[string]string, result int
 	r := ErrorResponse{}
 	err = json.Unmarshal(buf, &r)
 	if err != nil {
-		return ResponseError{errors.New("vkapi: vk response is not json"), string(buf)}
+		return &ResponseError{errors.New("vkapi: vk response is not json"), string(buf)}
 	}
 	if r.Error != nil {
 		debugPrint("%+v\n", r.Error.ErrorMsg)

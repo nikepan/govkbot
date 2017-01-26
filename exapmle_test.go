@@ -11,6 +11,12 @@ func helpHandler(m *govkbot.Message) (reply string) {
 }
 
 func errorHandler(msg *govkbot.Message, err error) {
+	// Check gor VK Error code
+	if _, ok := err.(*govkbot.VKError); !ok {
+		log.Fatal(
+			err.(govkbot.VKError).ErrorCode,
+			err.Error(), msg.Body)
+	}
 	log.Fatal(err.Error(), msg.Body)
 }
 

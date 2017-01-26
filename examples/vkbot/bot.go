@@ -33,6 +33,9 @@ func helpHandler(m *govkbot.Message) (reply string) {
 }
 
 func errorHandler(msg *govkbot.Message, err error) {
+	if _, ok := err.(*govkbot.VKError); !ok {
+		notifyAdmin("VK ERROR: " + err.Error()) // err.(govkbot.VKError).ErrorCode
+	}
 	notifyAdmin("ERROR: " + err.Error())
 }
 
