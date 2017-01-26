@@ -22,23 +22,29 @@ func TestCall(t *testing.T) {
 func TestVkAPI_Call(t *testing.T) {
 	SetDebug(true)
 	log.SetOutput(ioutil.Discard)
-	buf, err := API.Call("messages.get", H{})
+	r := SimpleResponse{}
+	err := API.CallMethod("messages.get", H{}, &r)
 	SetDebug(false)
 	log.SetOutput(os.Stdout)
 	if err == nil {
-		t.Error("no error returned: " + string(buf))
+		t.Error("no error returned")
 	}
 }
 
 func TestNoJSON(t *testing.T) {
-	_, err := API.Call("nojson", H{})
+	SetAPI("", "test", "")
+	r := SimpleResponse{}
+	err := API.CallMethod("nojson", H{}, &r)
+	log.Println(err)
 	if err == nil {
 		t.Error("no error returned")
 	}
 }
 
 func TestVkError(t *testing.T) {
-	_, err := API.Call("vkerr", H{})
+	SetAPI("", "test", "")
+	r := SimpleResponse{}
+	err := API.CallMethod("vkerr", H{}, &r)
 	if err == nil {
 		t.Error("no error returned")
 	}

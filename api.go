@@ -57,21 +57,11 @@ func (api *VkAPI) Call(method string, params map[string]string) ([]byte, error) 
 		time.Sleep(time.Duration(time.Millisecond * time.Duration(api.RequestInterval)))
 		return nil, err
 	}
-	buf, _ := ioutil.ReadAll(resp.Body)
+	buf, err := ioutil.ReadAll(resp.Body)
 	time.Sleep(time.Duration(time.Millisecond * time.Duration(api.RequestInterval)))
 	debugPrint("vk resp: %+v\n", string(buf))
 
-	r := SimpleResponse{}
-	err = json.Unmarshal(buf, &r)
-	if err != nil {
-		return buf, ResponseError{errors.New("vkapi: vk response is not json"), string(buf)}
-	}
-	if r.Error != nil {
-		debugPrint("%+v\n", r.Error.ErrorMsg)
-		return buf, r.Error
-	}
-
-	return buf, nil
+	return buf, err
 }
 
 func (api *VkAPI) CallMethod(method string, params map[string]string, result interface{}) error {
@@ -79,6 +69,16 @@ func (api *VkAPI) CallMethod(method string, params map[string]string, result int
 	if err != nil {
 		return err
 	}
+	r := ErrorResponse{}
+	err = json.Unmarshal(buf, &r)
+	if err != nil {
+		return ResponseError{errors.New("vkapi: vk response is not json"), string(buf)}
+	}
+	if r.Error != nil {
+		debugPrint("%+v\n", r.Error.ErrorMsg)
+		return r.Error
+	}
+
 	err = json.Unmarshal(buf, result)
 	return err
 }

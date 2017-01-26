@@ -89,6 +89,11 @@ type SimpleResponse struct {
 	Error    *VKError
 }
 
+// ErrorResponse - need to parse VK error
+type ErrorResponse struct {
+	Error *VKError
+}
+
 // ChatInfo - chat info
 type ChatInfo struct {
 	ID      int    `json:"id"`
@@ -126,7 +131,7 @@ type ChatInfoResponse struct {
 	Error    *VKError
 }
 
-func (err *VKError) Error() string {
+func (err VKError) Error() string {
 	return "vk: " + err.ErrorMsg
 }
 
