@@ -64,11 +64,11 @@ func (api *VkAPI) Call(method string, params map[string]string) ([]byte, error) 
 	r := SimpleResponse{}
 	err = json.Unmarshal(buf, &r)
 	if err != nil {
-		return buf, errors.New("bad vk response: \"" + string(buf) + "\"")
+		return buf, ResponseError{errors.New("vkapi: vk response is not json"), string(buf)}
 	}
 	if r.Error != nil {
 		debugPrint("%+v\n", r.Error.ErrorMsg)
-		return buf, errors.New(r.Error.ErrorMsg)
+		return buf, r.Error
 	}
 
 	return buf, nil
@@ -77,12 +77,9 @@ func (api *VkAPI) Call(method string, params map[string]string) ([]byte, error) 
 func (api *VkAPI) CallMethod(method string, params map[string]string, result interface{}) error {
 	buf, err := api.Call(method, params)
 	if err != nil {
-		return errors.New(err.Error())
+		return err
 	}
 	err = json.Unmarshal(buf, result)
-	if err != nil {
-		err = errors.New(err.Error())
-	}
 	return err
 }
 

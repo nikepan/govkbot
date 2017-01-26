@@ -20,14 +20,27 @@ func TestCall(t *testing.T) {
 }
 
 func TestVkAPI_Call(t *testing.T) {
-	api := API
 	SetDebug(true)
 	log.SetOutput(ioutil.Discard)
-	buf, err := api.Call("messages.get", H{})
+	buf, err := API.Call("messages.get", H{})
 	SetDebug(false)
 	log.SetOutput(os.Stdout)
 	if err == nil {
 		t.Error("no error returned: " + string(buf))
+	}
+}
+
+func TestNoJSON(t *testing.T) {
+	_, err := API.Call("nojson", H{})
+	if err == nil {
+		t.Error("no error returned")
+	}
+}
+
+func TestVkError(t *testing.T) {
+	_, err := API.Call("vkerr", H{})
+	if err == nil {
+		t.Error("no error returned")
 	}
 }
 

@@ -106,6 +106,20 @@ type VKError struct {
 	//	RequestParams
 }
 
+// VKError - error with response content
+type ResponseError struct {
+	err     error
+	content string
+}
+
+func (err ResponseError) Error() string {
+	return err.err.Error()
+}
+
+func (err ResponseError) Content() string {
+	return err.content
+}
+
 // ChatInfoResponse - chat info vk struct
 type ChatInfoResponse struct {
 	Response ChatInfo
@@ -113,7 +127,7 @@ type ChatInfoResponse struct {
 }
 
 func (err *VKError) Error() string {
-	return err.ErrorMsg
+	return "vk: " + err.ErrorMsg
 }
 
 func (a VKUsers) Len() int           { return len(a) }

@@ -1,0 +1,32 @@
+{
+  "error": {
+    "error_code": 113,
+    "error_msg": "Invalid user id",
+    "request_params": [
+      {
+        "key": "oauth",
+        "value": "1"
+      },
+      {
+        "key": "method",
+        "value": "users.get"
+      },
+      {
+        "key": "fields",
+        "value": "photo_50,city,verified"
+      },
+      {
+        "key": "name_case",
+        "value": "Nom"
+      },
+      {
+        "key": "user_ids",
+        "value": "210700erfrefr286"
+      },
+      {
+        "key": "v",
+        "value": "5.62"
+      }
+    ]
+  }
+}
