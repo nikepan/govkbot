@@ -7,11 +7,6 @@ import (
 	"time"
 )
 
-// @TODO auth by user/password
-// @TODO any substr handler
-// @TODO long pooling
-// @TODO replies from json files
-
 const (
 	vkAPIURL        = "https://api.vk.com/method/"
 	vkAPIVer        = "5.52"
