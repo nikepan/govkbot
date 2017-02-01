@@ -11,7 +11,7 @@ To get token you need:
 
 1. You can use any app id from https://vk.com/apps?act=wingames, for example 4775211
 
- (You create own app and get app_id on page https://vk.com/editapp?act=create (standalone app))
+ (You can create own app and get app_id on page https://vk.com/editapp?act=create (standalone app))
 
 2. Open in browser with logged in VK (you must use IP, where you want run bot)
 
