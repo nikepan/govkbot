@@ -39,6 +39,11 @@ func TestSetAPI(t *testing.T) {
 	if API.Token != token {
 		t.Error("Error setup API")
 	}
+	SetLang("ru")
+	if API.Lang != "ru" {
+		t.Error("Error setup Lang")
+	}
+	SetLang("")
 }
 
 func TestSetToken(t *testing.T) {

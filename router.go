@@ -56,6 +56,7 @@ func newAPI() *VkAPI {
 		MessagesCount:   messagesCount,
 		RequestInterval: requestInterval,
 		DEBUG:           false,
+		HTTPS:           true,
 	}
 }
 
@@ -78,6 +79,11 @@ func SetAPI(token string, url string, ver string) {
 	if ver != "" {
 		API.Ver = ver
 	}
+}
+
+// SetLang - sets VK response language. Default auto. Available: en, ru, ua, be, es, fi, de, it
+func SetLang(lang string) {
+	API.Lang = lang
 }
 
 // HandleMessage - add substr message handler.

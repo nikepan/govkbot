@@ -18,6 +18,8 @@ type VkAPI struct {
 	URL             string
 	Ver             string
 	UID             int
+	Lang            string
+	HTTPS           bool
 	AdminID         int
 	MessagesCount   int
 	RequestInterval int
@@ -41,6 +43,12 @@ func (api *VkAPI) Call(method string, params map[string]string) ([]byte, error) 
 	debugPrint("vk req: %+v params: %+v\n", api.URL+method, params)
 	params["access_token"] = api.Token
 	params["v"] = api.Ver
+	if api.Lang != "" {
+		params["lang"] = api.Lang
+	}
+	if api.HTTPS {
+		params["https"] = "1"
+	}
 
 	parameters := url.Values{}
 	for k, v := range params {
