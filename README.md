@@ -1,4 +1,9 @@
-# Go VK bot package [![godoc](http://img.shields.io/badge/godoc-reference-blue.svg?style=flat)](https://godoc.org/github.com/nikepan/govkbot)
+# Go VK bot package
+ 
+[![Build Status](https://travis-ci.org/nikepan/govkbot.svg?branch=master)](https://travis-ci.org/nikepan/govkbot)
+[![codecov](https://codecov.io/gh/nikepan/govkbot/branch/master/graph/badge.svg)](https://codecov.io/gh/nikepan/govkbot)
+[![Go Report Card](https://goreportcard.com/badge/github.com/nikepan/govkbot)](https://goreportcard.com/report/github.com/nikepan/govkbot)
+[![godoc](http://img.shields.io/badge/godoc-reference-blue.svg?style=flat)](https://godoc.org/github.com/nikepan/govkbot)
 
 
 This is simple VK.com bot API.
