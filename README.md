@@ -19,30 +19,7 @@ Installatioin:
 
 `go get github.com/nikepan/govkbot`
 
-For work you need get VK access token with rights: messages,friends,offline.
-
-You need standalone vk app_id. You can use any app_id from https://vk.com/apps?act=wingames, for example 4775211 
- (Or you can create own app and get app_id on page https://vk.com/editapp?act=create (standalone app))
-
-You can get token from you server ip with this node.js package:
-https://www.npmjs.com/package/vk-auth (you need login, pass and app_id)
-
-
-To manual get token you need:
-
-1. Open in browser with logged in VK (you must use IP, where you want run bot)
-```
- https://oauth.vk.com/authorize?client_id={{app_id}}&scope=offline,group,messages,friends&display=page&response_type=token&redirect_uri=https://oauth.vk.com/blank.html
- ```
-2. Copy token query parameter from URL string. Token valid only for IP from what you get it.
-
-
-If you receive validation check (for example, you use ip first time)
-```json
-{"error":{"error_code":17,"error_msg":"Validation required: please open redirect_uri in browser ...", 
-"redirect_uri":"https://m.vk.com/login?act=security_check&api_hash=Qwerty1234567890"}}
-```
-you can use https://github.com/Yashko/vk-validation-node.
+For work you need get VK access token with rights: messages,friends,offline (see below).
 
 
 # Quickstart
@@ -88,3 +65,29 @@ func main() {
     govkbot.Listen(VKToken, "", "", VKAdminID)
 }
 ```
+
+
+# Getting token
+
+You need standalone vk app_id. You can use any app_id from https://vk.com/apps?act=wingames, for example 4775211 
+ (Or you can create own app and get app_id on page https://vk.com/editapp?act=create (standalone app))
+
+You can get token from you server ip with this node.js package:
+https://www.npmjs.com/package/vk-auth (you need login, pass and app_id)
+
+
+To manual get token you need:
+
+1. Open in browser with logged in VK (you must use IP, where you want run bot)
+```
+ https://oauth.vk.com/authorize?client_id={{app_id}}&scope=offline,groups,messages,friends&display=page&response_type=token&redirect_uri=https://oauth.vk.com/blank.html
+ ```
+2. Copy token query parameter from URL string. Token valid only for IP from what you get it.
+
+
+If you receive validation check (for example, you use ip first time)
+```json
+{"error":{"error_code":17,"error_msg":"Validation required: please open redirect_uri in browser ...", 
+"redirect_uri":"https://m.vk.com/login?act=security_check&api_hash=Qwerty1234567890"}}
+```
+you can use https://github.com/Yashko/vk-validation-node.
