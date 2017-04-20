@@ -170,8 +170,8 @@ func RouteAction(m *Message) (replies []string, err error) {
 // RouteMessage routes single message
 func RouteMessage(m *Message) (replies []string, err error) {
 	message := strings.TrimSpace(strings.ToLower(m.Body))
-	if strings.HasPrefix(message, "/ ") {
-		message = "/" + strings.TrimPrefix(message, "/ ")
+	if HasPrefix(message, "/ ") {
+		message = "/" + TrimPrefix(message, "/ ")
 	}
 	if m.Action != "" {
 		replies, err = RouteAction(m)
@@ -179,7 +179,7 @@ func RouteMessage(m *Message) (replies []string, err error) {
 	}
 	marked := false
 	for k, v := range bot.msgRoutes {
-		if strings.HasPrefix(message, k) {
+		if HasPrefix(message, k) {
 			msg := v(m)
 			if msg != "" {
 				marked = true
