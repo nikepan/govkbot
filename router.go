@@ -231,6 +231,7 @@ func MainRoute() {
 			if msg != "" {
 				_, err = m.Reply(msg)
 				if err != nil {
+					log.Printf("Error sending message: '%+v'\n", msg)
 					sendError(m, err)
 				}
 			}
