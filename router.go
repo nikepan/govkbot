@@ -233,6 +233,10 @@ func MainRoute() {
 				if err != nil {
 					log.Printf("Error sending message: '%+v'\n", msg)
 					sendError(m, err)
+					_, err = m.Reply("Cant send message, maybe wrong/china letters?")
+					if err != nil {
+						sendError(m, err)
+					}
 				}
 			}
 		}
