@@ -216,10 +216,12 @@ func (api *VkAPI) SendChatMessage(chatID int, msg string) (id int, err error) {
 //SendMessage sending a message to user
 func (api *VkAPI) SendMessage(userID int, msg string) (id int, err error) {
 	r := SimpleResponse{}
-	err = api.CallMethod(apiMessagesSend, H{
-		"user_id": strconv.Itoa(userID),
-		"message": msg,
-	}, &r)
+	if msg != "" {
+		err = api.CallMethod(apiMessagesSend, H{
+			"user_id": strconv.Itoa(userID),
+			"message": msg,
+		}, &r)
+	}
 	return r.Response, err
 }
 
