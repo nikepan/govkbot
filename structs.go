@@ -117,10 +117,12 @@ type ChatInfo struct {
 type VKError struct {
 	ErrorCode int    `json:"error_code"`
 	ErrorMsg  string `json:"error_msg"`
+	Method    string `json:"method"`
+	Params    string `json:"params"`
 	//	RequestParams
 }
 
-// VKError - error with response content
+// ResponseError - error with response content
 type ResponseError struct {
 	err     error
 	content string
@@ -141,7 +143,7 @@ type ChatInfoResponse struct {
 }
 
 func (err VKError) Error() string {
-	return "vk: " + err.ErrorMsg
+	return "vk: " + err.ErrorMsg + " (" + err.Method + ")"
 }
 
 func (a VKUsers) Len() int           { return len(a) }

@@ -2,8 +2,9 @@ package govkbot_test
 
 import (
 	"fmt"
-	"github.com/nikepan/govkbot"
 	"log"
+
+	"github.com/nikepan/govkbot"
 )
 
 func helpHandler(m *govkbot.Message) (reply string) {
@@ -11,7 +12,7 @@ func helpHandler(m *govkbot.Message) (reply string) {
 }
 
 func errorHandler(msg *govkbot.Message, err error) {
-	// Check gor VK Error code
+	// Check for VK Error code
 	if _, ok := err.(*govkbot.VKError); !ok {
 		log.Fatal(
 			err.(govkbot.VKError).ErrorCode,

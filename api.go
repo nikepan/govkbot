@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -24,6 +25,7 @@ type VkAPI struct {
 	MessagesCount   int
 	RequestInterval int
 	DEBUG           bool
+	Retries         int
 }
 
 const (
@@ -72,21 +74,34 @@ func (api *VkAPI) Call(method string, params map[string]string) ([]byte, error) 
 	return buf, err
 }
 
+// CallMethod - call VK method with params and put response into result
 func (api *VkAPI) CallMethod(method string, params map[string]string, result interface{}) error {
-	buf, err := api.Call(method, params)
-	if err != nil {
-		return err
+	var buf []byte
+	var err error
+	for i := 0; i < api.Retries; i++ {
+		buf, err := api.Call(method, params)
+		if err != nil {
+			return err
+		}
+		r := ErrorResponse{}
+		err = json.Unmarshal(buf, &r)
+		if err != nil {
+			return &ResponseError{errors.New("vkapi: vk response is not json"), string(buf)}
+		}
+		if r.Error != nil {
+			if strings.Contains(strings.ToLower(r.Error.ErrorMsg), "server error") && i < api.Retries-1 {
+				continue
+			}
+			debugPrint("%+v\n", r.Error.ErrorMsg)
+			r.Error.Method = method
+			parameters := url.Values{}
+			for k, v := range params {
+				parameters.Add(k, v)
+			}
+			r.Error.Params = parameters.Encode()
+			return r.Error
+		}
 	}
-	r := ErrorResponse{}
-	err = json.Unmarshal(buf, &r)
-	if err != nil {
-		return &ResponseError{errors.New("vkapi: vk response is not json"), string(buf)}
-	}
-	if r.Error != nil {
-		debugPrint("%+v\n", r.Error.ErrorMsg)
-		return r.Error
-	}
-
 	err = json.Unmarshal(buf, result)
 	return err
 }

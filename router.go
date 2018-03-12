@@ -57,6 +57,7 @@ func newAPI() *VkAPI {
 		RequestInterval: requestInterval,
 		DEBUG:           false,
 		HTTPS:           true,
+		Retries:         1,
 	}
 }
 
