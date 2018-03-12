@@ -128,10 +128,12 @@ type ResponseError struct {
 	content string
 }
 
+// Error - returns error text
 func (err ResponseError) Error() string {
 	return err.err.Error()
 }
 
+// Content - returns additional error content
 func (err ResponseError) Content() string {
 	return err.content
 }

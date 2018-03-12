@@ -11,6 +11,7 @@ import (
 	"time"
 )
 
+// H - struct for pass params
 type H map[string]string
 
 // VkAPI - api config
