@@ -13,6 +13,7 @@ const (
 
 func TestCall(t *testing.T) {
 	r := SimpleResponse{}
+	API.DEBUG = true
 	err := API.CallMethod("utils.getServerTime", H{}, &r)
 	if err != nil {
 		t.Error(err.Error())

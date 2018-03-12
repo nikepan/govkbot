@@ -3,6 +3,7 @@ package govkbot
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -60,6 +61,7 @@ func (api *VkAPI) Call(method string, params map[string]string) ([]byte, error) 
 
 	if api.URL == "test" {
 		content, err := ioutil.ReadFile("./mocks/" + method + ".json")
+		fmt.Println(content)
 		return content, err
 	}
 	resp, err := http.PostForm(api.URL+method, parameters)
@@ -77,8 +79,6 @@ func (api *VkAPI) Call(method string, params map[string]string) ([]byte, error) 
 
 // CallMethod - call VK method with params and put response into result
 func (api *VkAPI) CallMethod(method string, params map[string]string, result interface{}) error {
-	var buf []byte
-	var err error
 	for i := 0; i < api.Retries; i++ {
 		buf, err := api.Call(method, params)
 		if err != nil {
@@ -102,9 +102,10 @@ func (api *VkAPI) CallMethod(method string, params map[string]string, result int
 			r.Error.Params = parameters.Encode()
 			return r.Error
 		}
+		err = json.Unmarshal(buf, result)
+		return err
 	}
-	err = json.Unmarshal(buf, result)
-	return err
+	return errors.New("Unknown request error. Method " + method + " (attempts exceed)")
 }
 
 // GetMessages - get user messages (up to 200)
