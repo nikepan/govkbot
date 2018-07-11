@@ -26,6 +26,7 @@ type VKBot struct {
 	lastUserMessages map[int]int
 	lastChatMessages map[int]int
 	autoFriend       bool
+	history          *HistoryReader
 }
 
 var bot = newBot()
@@ -45,6 +46,7 @@ func newBot() *VKBot {
 		markedMessages:   make(map[int]*Message),
 		lastUserMessages: make(map[int]int),
 		lastChatMessages: make(map[int]int),
+		history: new(HistoryReader),
 	}
 }
 
@@ -221,7 +223,7 @@ func RouteMessages(messages []*Message) (result map[*Message][]string) {
 // MainRoute - main router func. Working cycle Listen.
 func MainRoute() {
 	bot.markedMessages = make(map[int]*Message)
-	messages, err := GetMessages()
+	messages, err := bot.history.GetMessages()
 	if err != nil {
 		sendError(nil, err)
 	}

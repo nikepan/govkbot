@@ -20,6 +20,7 @@ const (
 )
 const DefaultMode = LongPollModeGetAttachments
 const DefaultVersion = 2
+const vkTsDiff = 180116722
 
 type LongPollServer struct {
 	Key    string
@@ -73,6 +74,29 @@ type LongPollMessage struct {
 	RandomID int
 }
 
+type HistoryMessage struct {
+	Date int `json:"date"`
+	FromID int `json:"from_id"`
+	ID int `json:"id"`
+	Out int `json:"out"`
+	PeerID int64 `json:"peer_id"`
+	Text string `json:"text"`
+	ConversationMessageId int `json:"converstion_message_id"`
+	FwdMessages []LongPollMessage `json:"fwd_messages"`
+	Important bool `json:"important"`
+	RandomID int `json:"random_id"`
+	Attachments []Attachment `json:"attachments"`
+	IsHidden bool `json:"is_hidden"`
+}
+
+type HistoryResponse struct {
+	Messages []HistoryMessage
+}
+
+type HistoryReader struct {
+	ts int64
+}
+
 
 func (api *VkAPI) GetLongPollServer(needPts bool, lpVersion int) (resp LongPollServer, err error) {
 	r := LongPollServerResponse{}
@@ -91,6 +115,27 @@ func (api *VkAPI) GetLongPollServer(needPts bool, lpVersion int) (resp LongPollS
 	return r.Response, err
 }
 
+func VKTimestamp(ts int64) int64 {
+	return ts + vkTsDiff
+}
+
+func GetMessagesHistory(ts int64) ([]HistoryMessage, error) {
+	params := make(map[string]string)
+	params["ts"] = strconv.FormatInt(ts, 10)
+	resp := HistoryResponse{}
+	err := API.CallMethod("messages.getLongPollHistory", params, &resp)
+	return resp.Messages, err
+}
+
+func (h *HistoryReader) GetMessages() ([]HistoryMessage, error) {
+	ts := VKTimestamp(time.Now().Unix())
+	if h.ts == 0 {
+		h.ts = VKTimestamp(time.Now().Unix())
+	}
+	messages, err := GetMessagesHistory(h.ts)
+	h.ts = ts
+	return messages, err
+}
 
 func (server *LongPollServer) Request() (*LongPollResponse, error) {
 	parameters := url.Values{}
