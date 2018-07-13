@@ -193,6 +193,7 @@ func (server *LongPollServer) Request() ([]byte, error) {
 	parameters.Add("ts", strconv.Itoa(server.Ts))
 	parameters.Add("wait", strconv.Itoa(server.Wait))
 	parameters.Add("key", server.Key)
+	parameters.Add("mode", "2")
 	parameters.Add("version", strconv.Itoa(server.Version))
 	query := "https://"+server.Server+"?"+parameters.Encode()
 	resp, err := http.Get(query)
@@ -269,18 +270,31 @@ func (server *LongPollServer) GetLongPollMessages() ([]*Message, error) {
 }
 
 func (server *LongPollServer) ParseLongPollMessages(j string) ([]*Message, error) {
+	//fmt.Println(j)
 	count := gjson.Get(j, "updates.#")
 	result := []*Message{}
 	for i := 0; i < int(count.Int()); i++ {
 		eventType := gjson.Get(j, "updates."+strconv.Itoa(i)+".0")
 		if eventType.Int() == 4 {
-			msg := Message{}
-			msg.Body = gjson.Get(j, "updates."+strconv.Itoa(i)+".5").String()
-			msg.UserID = int(gjson.Get(j, "updates."+strconv.Itoa(i)+".6.from").Int())
-			msg.PeerID = int(gjson.Get(j, "updates."+strconv.Itoa(i)+".3").Int())
-			msg.Date = int(gjson.Get(j, "updates."+strconv.Itoa(i)+".4").Int())
-			result = append(result, &msg)
-			fmt.Println(msg)
+			out := gjson.Get(j, "updates."+strconv.Itoa(i)+".2").Int() & 2
+			if out == 0 {
+				msg := Message{}
+				msg.ID = int(gjson.Get(j, "updates."+strconv.Itoa(i)+".1").Int())
+				msg.Body = gjson.Get(j, "updates."+strconv.Itoa(i)+".5").String()
+				msg.UserID = int(gjson.Get(j, "updates."+strconv.Itoa(i)+".6.from").Int())
+				msg.PeerID = int(gjson.Get(j, "updates."+strconv.Itoa(i)+".3").Int())
+				if msg.UserID == 0 {
+					msg.UserID = msg.PeerID
+				} else {
+					msg.ChatID = msg.PeerID - 2000000000
+				}
+				msg.Date = int(gjson.Get(j, "updates."+strconv.Itoa(i)+".4").Int())
+				result = append(result, &msg)
+				if msg.UserID == 3759927 {
+					fmt.Println(msg)
+					fmt.Println(j)
+				}
+			}
 		}
 	}
 	return result, nil

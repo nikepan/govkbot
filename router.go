@@ -30,6 +30,7 @@ type VKBot struct {
 	autoFriend       bool
 	history          *HistoryReader
 	LongPoll  		 *LongPollServer
+	readMessages   map[int]time.Time
 }
 
 //API - bot API
@@ -51,6 +52,7 @@ func newBot() *VKBot {
 		lastChatMessages: make(map[int]int),
 		history: new(HistoryReader),
 		LongPoll: API.GetLongPollServer(false, longPollVersion),
+		readMessages: make(map[int]time.Time),
 	}
 }
 
@@ -224,6 +226,21 @@ func RouteMessages(messages []*Message) (result map[*Message][]string) {
 	return result
 }
 
+func FilterReadMesages(messages []*Message) (result []*Message) {
+	for _, m := range messages {
+		t, ok := bot.readMessages[m.ID]
+		if ok {
+			if time.Since(t).Minutes() > 1 {
+				delete(bot.readMessages, m.ID)
+			}
+		} else {
+			result = append(result, m)
+			bot.readMessages[m.ID] = time.Now()
+		}
+	}
+	return result
+}
+
 // MainRoute - main router func. Working cycle Listen.
 func MainRoute() {
 	bot.markedMessages = make(map[int]*Message)
@@ -231,6 +248,7 @@ func MainRoute() {
 	if err != nil {
 		sendError(nil, err)
 	}
+	messages = FilterReadMesages(messages)
 	fmt.Println("inbox: ", messages)
 	replies := RouteMessages(messages)
 	for m, msgs := range replies {
