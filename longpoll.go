@@ -11,6 +11,7 @@ import (
 	"github.com/tidwall/gjson"
 	"github.com/labstack/gommon/log"
 	"fmt"
+	"errors"
 )
 
 const DefaultWait = 25
@@ -103,6 +104,13 @@ type HistoryReader struct {
 	ts int64
 }
 
+type FailResponse struct {
+	Failed int
+	Ts     int
+	MinVersion int `json:"min_version"`
+	MaxVersion int `json:"max_version"`
+}
+
 
 func (api *VkAPI) GetLongPollServer(needPts bool, lpVersion int) (resp *LongPollServer) {
 	server := LongPollServer{}
@@ -121,7 +129,7 @@ func (server *LongPollServer) Init() (err error) {
 	if server.NeedPts {
 		pts = 1
 	}
-	err = API.CallMethod(apiMessagesSend, H{
+	err = API.CallMethod("messages.getLongPollServer", H{
 		"need_pts": strconv.Itoa(pts),
 		"message": strconv.Itoa(server.LpVersion),
 	}, &r)
@@ -131,6 +139,7 @@ func (server *LongPollServer) Init() (err error) {
 	server.RequestInterval = API.RequestInterval
 	server.Server = r.Response.Server
 	server.Ts = r.Response.Ts
+	server.Key = r.Response.Key
 	return err
 }
 
@@ -183,8 +192,9 @@ func (server *LongPollServer) Request() ([]byte, error) {
 	parameters.Add("act", "a_check")
 	parameters.Add("ts", strconv.Itoa(server.Ts))
 	parameters.Add("wait", strconv.Itoa(server.Wait))
+	parameters.Add("key", server.Key)
 	parameters.Add("version", strconv.Itoa(server.Version))
-	query := "https://"+server.Server+parameters.Encode()
+	query := "https://"+server.Server+"?"+parameters.Encode()
 	resp, err := http.Get(query)
 	if err != nil {
 		debugPrint("%+v\n", err.Error())
@@ -193,7 +203,29 @@ func (server *LongPollServer) Request() ([]byte, error) {
 	}
 	buf, err := ioutil.ReadAll(resp.Body)
 	time.Sleep(time.Duration(time.Millisecond * time.Duration(server.RequestInterval)))
-	debugPrint("vk resp: %+v\n", string(buf))
+	debugPrint("longpoll vk resp: %+v\n", string(buf))
+
+	failResp := FailResponse{}
+	err = json.Unmarshal(buf, &failResp)
+	if err != nil {
+		return nil, err
+	}
+	switch failResp.Failed {
+	case 1:
+		server.Ts = failResp.Ts
+		return server.Request()
+	case 2:
+	case 3:
+		err = server.Init()
+		if err != nil {
+			log.Fatal(err)
+		}
+		return server.Request()
+	case 4:
+		return nil, errors.New("vkapi: wrong longpoll version")
+	default:
+		return buf, nil
+	}
 	return buf, nil
 }
 
@@ -237,7 +269,6 @@ func (server *LongPollServer) GetLongPollMessages() ([]*Message, error) {
 }
 
 func (server *LongPollServer) ParseLongPollMessages(j string) ([]*Message, error) {
-	fmt.Println(j)
 	count := gjson.Get(j, "updates.#")
 	result := []*Message{}
 	for i := 0; i < int(count.Int()); i++ {
@@ -249,6 +280,7 @@ func (server *LongPollServer) ParseLongPollMessages(j string) ([]*Message, error
 			msg.PeerID = int(gjson.Get(j, "updates."+strconv.Itoa(i)+".3").Int())
 			msg.Date = int(gjson.Get(j, "updates."+strconv.Itoa(i)+".4").Int())
 			result = append(result, &msg)
+			fmt.Println(msg)
 		}
 	}
 	return result, nil

@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"fmt"
 )
 
 const (
@@ -230,9 +231,11 @@ func MainRoute() {
 	if err != nil {
 		sendError(nil, err)
 	}
+	fmt.Println("inbox: ", messages)
 	replies := RouteMessages(messages)
 	for m, msgs := range replies {
 		for _, msg := range msgs {
+			fmt.Println("ountbox: ", msg)
 			if msg != "" {
 				_, err = m.Reply(msg)
 				if err != nil {

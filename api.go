@@ -8,7 +8,6 @@ import (
 	"net/url"
 	"strconv"
 	"time"
-	"log"
 )
 
 type H map[string]string
@@ -60,7 +59,6 @@ func (api *VkAPI) Call(method string, params map[string]string) ([]byte, error) 
 		content, err := ioutil.ReadFile("./mocks/" + method + ".json")
 		return content, err
 	}
-	log.Panic()
 	resp, err := http.PostForm(api.URL+method, parameters)
 	if err != nil {
 		debugPrint("%+v\n", err.Error())
@@ -200,9 +198,9 @@ func (api *VkAPI) User(uid int) (*User, error) {
 // MarkAsRead - mark message as read
 func (m Message) MarkAsRead() (err error) {
 
-	r := SimpleResponse{}
-	err = API.CallMethod(apiMessagesMarkAsRead, H{"message_ids": strconv.Itoa(m.ID)}, &r)
-	return err
+	//r := SimpleResponse{}
+	//err = API.CallMethod(apiMessagesMarkAsRead, H{"message_ids": strconv.Itoa(m.ID)}, &r)
+	return nil
 }
 
 //SendChatMessage sending a message to chat
