@@ -8,6 +8,9 @@ import (
 	"io/ioutil"
 	"encoding/json"
 	"strings"
+	"github.com/tidwall/gjson"
+	"github.com/labstack/gommon/log"
+	"fmt"
 )
 
 const DefaultWait = 25
@@ -30,6 +33,9 @@ type LongPollServer struct {
 	Mode int
 	Version int
 	RequestInterval int
+	NeedPts bool
+	Api *VkAPI
+	LpVersion int
 }
 
 type LongPollServerResponse struct {
@@ -41,7 +47,7 @@ type LongPollUpdateNum []int64
 
 type LongPollResponse struct {
 	Ts uint
-	Updates []LongPollUpdate
+	Updates []interface{}
 }
 
 type Attachment struct {
@@ -98,21 +104,34 @@ type HistoryReader struct {
 }
 
 
-func (api *VkAPI) GetLongPollServer(needPts bool, lpVersion int) (resp LongPollServer, err error) {
+func (api *VkAPI) GetLongPollServer(needPts bool, lpVersion int) (resp *LongPollServer) {
+	server := LongPollServer{}
+	server.NeedPts = needPts
+	server.Wait = DefaultWait
+	server.Mode = DefaultMode
+	server.Version = DefaultVersion
+	server.RequestInterval = api.RequestInterval
+	server.LpVersion =lpVersion
+	return &server
+}
+
+func (server *LongPollServer) Init() (err error) {
 	r := LongPollServerResponse{}
 	pts := 0
-	if needPts {
+	if server.NeedPts {
 		pts = 1
 	}
-	err = api.CallMethod(apiMessagesSend, H{
+	err = API.CallMethod(apiMessagesSend, H{
 		"need_pts": strconv.Itoa(pts),
-		"message": strconv.Itoa(lpVersion),
+		"message": strconv.Itoa(server.LpVersion),
 	}, &r)
-	r.Response.Wait = DefaultWait
-	r.Response.Mode = DefaultMode
-	r.Response.Version = DefaultVersion
-	r.Response.RequestInterval = api.RequestInterval
-	return r.Response, err
+	server.Wait = DefaultWait
+	server.Mode = DefaultMode
+	server.Version = DefaultVersion
+	server.RequestInterval = API.RequestInterval
+	server.Server = r.Response.Server
+	server.Ts = r.Response.Ts
+	return err
 }
 
 func VKTimestamp(ts int64) int64 {
@@ -127,17 +146,39 @@ func GetMessagesHistory(ts int64) ([]HistoryMessage, error) {
 	return resp.Messages, err
 }
 
-func (h *HistoryReader) GetMessages() ([]HistoryMessage, error) {
+func (h *HistoryReader) GetMessages() ([]*Message, error) {
 	ts := VKTimestamp(time.Now().Unix())
 	if h.ts == 0 {
 		h.ts = VKTimestamp(time.Now().Unix())
 	}
 	messages, err := GetMessagesHistory(h.ts)
 	h.ts = ts
-	return messages, err
+	return ConvertMessages(messages), err
 }
 
-func (server *LongPollServer) Request() (*LongPollResponse, error) {
+func ConvertMessages(messages []HistoryMessage) []*Message {
+	result := []*Message{}
+	for _, message := range messages {
+		msg := Message{}
+		msg.Body = message.Text
+		msg.UserID = message.FromID
+		msg.ChatID = int(message.PeerID)
+		msg.ID = message.ID
+		result = append(result, &msg)
+	}
+	return result
+}
+
+func (server *LongPollServer) Request() ([]byte, error) {
+	var err error
+
+	if server.Server == "" {
+		err = server.Init()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+
 	parameters := url.Values{}
 	parameters.Add("act", "a_check")
 	parameters.Add("ts", strconv.Itoa(server.Ts))
@@ -153,7 +194,7 @@ func (server *LongPollServer) Request() (*LongPollResponse, error) {
 	buf, err := ioutil.ReadAll(resp.Body)
 	time.Sleep(time.Duration(time.Millisecond * time.Duration(server.RequestInterval)))
 	debugPrint("vk resp: %+v\n", string(buf))
-	return GetLongPollResponse(buf)
+	return buf, nil
 }
 
 func GetLongPollResponse(buf []byte) (*LongPollResponse, error) {
@@ -171,6 +212,7 @@ func GetLongPollResponse(buf []byte) (*LongPollResponse, error) {
 	return &result, nil
 }
 
+
 func GetLongPollMessage(resp []interface{}) *LongPollMessage {
 	message := LongPollMessage{}
 	mt, _ := resp[0].(json.Number).Int64()
@@ -185,16 +227,29 @@ func GetLongPollMessage(resp []interface{}) *LongPollMessage {
 	return &message
 }
 
-func (server *LongPollServer) GetLongPollMessages() ([]*LongPollMessage, error) {
+func (server *LongPollServer) GetLongPollMessages() ([]*Message, error) {
 	resp, err := server.Request()
 	if err != nil {
 		return nil, err
 	}
-	messages := make([]*LongPollMessage, 1)
-	for _, el := range resp.Updates {
-		if el[0].(int) == 4 {
-			messages = append(messages, GetLongPollMessage(el))
+	messages, err := server.ParseLongPollMessages(string(resp))
+	return messages, nil
+}
+
+func (server *LongPollServer) ParseLongPollMessages(j string) ([]*Message, error) {
+	fmt.Println(j)
+	count := gjson.Get(j, "updates.#")
+	result := []*Message{}
+	for i := 0; i < int(count.Int()); i++ {
+		eventType := gjson.Get(j, "updates."+strconv.Itoa(i)+".0")
+		if eventType.Int() == 4 {
+			msg := Message{}
+			msg.Body = gjson.Get(j, "updates."+strconv.Itoa(i)+".5").String()
+			msg.UserID = int(gjson.Get(j, "updates."+strconv.Itoa(i)+".6.from").Int())
+			msg.PeerID = int(gjson.Get(j, "updates."+strconv.Itoa(i)+".3").Int())
+			msg.Date = int(gjson.Get(j, "updates."+strconv.Itoa(i)+".4").Int())
+			result = append(result, &msg)
 		}
 	}
-	return messages, nil
+	return result, nil
 }

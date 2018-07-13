@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"strconv"
 	"time"
+	"log"
 )
 
 type H map[string]string
@@ -59,6 +60,7 @@ func (api *VkAPI) Call(method string, params map[string]string) ([]byte, error) 
 		content, err := ioutil.ReadFile("./mocks/" + method + ".json")
 		return content, err
 	}
+	log.Panic()
 	resp, err := http.PostForm(api.URL+method, parameters)
 	if err != nil {
 		debugPrint("%+v\n", err.Error())
@@ -204,6 +206,16 @@ func (m Message) MarkAsRead() (err error) {
 }
 
 //SendChatMessage sending a message to chat
+func (api *VkAPI) SendPeerMessage(peerID int, msg string) (id int, err error) {
+	r := SimpleResponse{}
+	err = api.CallMethod(apiMessagesSend, H{
+		"peer_id": strconv.Itoa(peerID),
+		"message": msg,
+	}, &r)
+	return r.Response, err
+}
+
+//SendChatMessage sending a message to chat
 func (api *VkAPI) SendChatMessage(chatID int, msg string) (id int, err error) {
 	r := SimpleResponse{}
 	err = api.CallMethod(apiMessagesSend, H{
@@ -227,6 +239,9 @@ func (api *VkAPI) SendMessage(userID int, msg string) (id int, err error) {
 
 // Reply - reply message
 func (m Message) Reply(msg string) (id int, err error) {
+	if m.PeerID != 0 {
+		return API.SendPeerMessage(m.PeerID, msg)
+	}
 	if m.ChatID != 0 {
 		return API.SendChatMessage(m.ChatID, msg)
 	}

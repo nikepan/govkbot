@@ -133,7 +133,7 @@ func TestCheckFriends(t *testing.T) {
 }
 
 func TestMainRoute(t *testing.T) {
-	SetAPI("", vkAPIURL, "")
+	SetAPI("", "test", "")
 	HandleError(errorHandler)
 	MainRoute()
 }

@@ -1,9 +1,6 @@
 package govkbot
 
 import (
-	"io/ioutil"
-	"log"
-	"os"
 	"testing"
 )
 
@@ -11,25 +8,25 @@ const (
 	wrongValueReturned = "Wrong value returned"
 )
 
-func TestCall(t *testing.T) {
-	r := SimpleResponse{}
-	err := API.CallMethod("utils.getServerTime", H{}, &r)
-	if err != nil {
-		t.Error(err.Error())
-	}
-}
+//func TestCall(t *testing.T) {
+//	r := SimpleResponse{}
+//	err := API.CallMethod("utils.getServerTime", H{}, &r)
+//	if err != nil {
+//		t.Error(err.Error())
+//	}
+//}
 
-func TestVkAPI_Call(t *testing.T) {
-	SetDebug(true)
-	log.SetOutput(ioutil.Discard)
-	r := SimpleResponse{}
-	err := API.CallMethod("messages.get", H{}, &r)
-	SetDebug(false)
-	log.SetOutput(os.Stdout)
-	if err == nil {
-		t.Error("no error returned")
-	}
-}
+//func TestVkAPI_Call(t *testing.T) {
+//	SetDebug(true)
+//	log.SetOutput(ioutil.Discard)
+//	r := SimpleResponse{}
+//	err := API.CallMethod("messages.get", H{}, &r)
+//	SetDebug(false)
+//	log.SetOutput(os.Stdout)
+//	if err == nil {
+//		t.Error("no error returned")
+//	}
+//}
 
 func TestNoJSON(t *testing.T) {
 	SetAPI("", "test", "")

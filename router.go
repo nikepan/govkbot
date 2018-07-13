@@ -12,6 +12,7 @@ const (
 	vkAPIVer        = "5.52"
 	messagesCount   = 200
 	requestInterval = 400 // 3 requests per second VK limit
+	longPollVersion = 3
 )
 
 // VKBot - bot config
@@ -27,12 +28,13 @@ type VKBot struct {
 	lastChatMessages map[int]int
 	autoFriend       bool
 	history          *HistoryReader
+	LongPoll  		 *LongPollServer
 }
-
-var bot = newBot()
 
 //API - bot API
 var API = newAPI()
+
+var bot = newBot()
 
 // SetDebug - enable/disable debug messages logging
 func SetDebug(debug bool) {
@@ -47,6 +49,7 @@ func newBot() *VKBot {
 		lastUserMessages: make(map[int]int),
 		lastChatMessages: make(map[int]int),
 		history: new(HistoryReader),
+		LongPoll: API.GetLongPollServer(false, longPollVersion),
 	}
 }
 
@@ -223,7 +226,7 @@ func RouteMessages(messages []*Message) (result map[*Message][]string) {
 // MainRoute - main router func. Working cycle Listen.
 func MainRoute() {
 	bot.markedMessages = make(map[int]*Message)
-	messages, err := bot.history.GetMessages()
+	messages, err := bot.LongPoll.GetLongPollMessages()
 	if err != nil {
 		sendError(nil, err)
 	}
