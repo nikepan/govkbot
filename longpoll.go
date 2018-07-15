@@ -24,7 +24,7 @@ const (
 )
 const DefaultMode = LongPollModeGetAttachments
 const DefaultVersion = 2
-const vkTsDiff = 180116722
+const ChatPrefix = 2000000000
 
 type LongPollServer struct {
 	Key    string
@@ -37,6 +37,7 @@ type LongPollServer struct {
 	NeedPts bool
 	Api *VkAPI
 	LpVersion int
+	ReadMessages map[int]time.Time
 }
 
 type LongPollServerResponse struct {
@@ -81,29 +82,6 @@ type LongPollMessage struct {
 	RandomID int
 }
 
-type HistoryMessage struct {
-	Date int `json:"date"`
-	FromID int `json:"from_id"`
-	ID int `json:"id"`
-	Out int `json:"out"`
-	PeerID int64 `json:"peer_id"`
-	Text string `json:"text"`
-	ConversationMessageId int `json:"converstion_message_id"`
-	FwdMessages []LongPollMessage `json:"fwd_messages"`
-	Important bool `json:"important"`
-	RandomID int `json:"random_id"`
-	Attachments []Attachment `json:"attachments"`
-	IsHidden bool `json:"is_hidden"`
-}
-
-type HistoryResponse struct {
-	Messages []HistoryMessage
-}
-
-type HistoryReader struct {
-	ts int64
-}
-
 type FailResponse struct {
 	Failed int
 	Ts     int
@@ -120,6 +98,7 @@ func (api *VkAPI) GetLongPollServer(needPts bool, lpVersion int) (resp *LongPoll
 	server.Version = DefaultVersion
 	server.RequestInterval = api.RequestInterval
 	server.LpVersion =lpVersion
+	server.ReadMessages = make(map[int]time.Time)
 	return &server
 }
 
@@ -143,41 +122,6 @@ func (server *LongPollServer) Init() (err error) {
 	return err
 }
 
-func VKTimestamp(ts int64) int64 {
-	return ts + vkTsDiff
-}
-
-func GetMessagesHistory(ts int64) ([]HistoryMessage, error) {
-	params := make(map[string]string)
-	params["ts"] = strconv.FormatInt(ts, 10)
-	resp := HistoryResponse{}
-	err := API.CallMethod("messages.getLongPollHistory", params, &resp)
-	return resp.Messages, err
-}
-
-func (h *HistoryReader) GetMessages() ([]*Message, error) {
-	ts := VKTimestamp(time.Now().Unix())
-	if h.ts == 0 {
-		h.ts = VKTimestamp(time.Now().Unix())
-	}
-	messages, err := GetMessagesHistory(h.ts)
-	h.ts = ts
-	return ConvertMessages(messages), err
-}
-
-func ConvertMessages(messages []HistoryMessage) []*Message {
-	result := []*Message{}
-	for _, message := range messages {
-		msg := Message{}
-		msg.Body = message.Text
-		msg.UserID = message.FromID
-		msg.ChatID = int(message.PeerID)
-		msg.ID = message.ID
-		result = append(result, &msg)
-	}
-	return result
-}
-
 func (server *LongPollServer) Request() ([]byte, error) {
 	var err error
 
@@ -193,9 +137,13 @@ func (server *LongPollServer) Request() ([]byte, error) {
 	parameters.Add("ts", strconv.Itoa(server.Ts))
 	parameters.Add("wait", strconv.Itoa(server.Wait))
 	parameters.Add("key", server.Key)
-	parameters.Add("mode", "2")
+	parameters.Add("mode", strconv.Itoa(DefaultMode))
 	parameters.Add("version", strconv.Itoa(server.Version))
 	query := "https://"+server.Server+"?"+parameters.Encode()
+	if server.Server == "test" {
+		content, err := ioutil.ReadFile("./mocks/longpoll.json")
+		return content, err
+	}
 	resp, err := http.Get(query)
 	if err != nil {
 		debugPrint("%+v\n", err.Error())
@@ -216,6 +164,11 @@ func (server *LongPollServer) Request() ([]byte, error) {
 		server.Ts = failResp.Ts
 		return server.Request()
 	case 2:
+		err = server.Init()
+		if err != nil {
+			log.Fatal(err)
+		}
+		return server.Request()
 	case 3:
 		err = server.Init()
 		if err != nil {
@@ -286,7 +239,7 @@ func (server *LongPollServer) ParseLongPollMessages(j string) ([]*Message, error
 				if msg.UserID == 0 {
 					msg.UserID = msg.PeerID
 				} else {
-					msg.ChatID = msg.PeerID - 2000000000
+					msg.ChatID = msg.PeerID - ChatPrefix
 				}
 				msg.Date = int(gjson.Get(j, "updates."+strconv.Itoa(i)+".4").Int())
 				result = append(result, &msg)
@@ -297,5 +250,23 @@ func (server *LongPollServer) ParseLongPollMessages(j string) ([]*Message, error
 			}
 		}
 	}
-	return result, nil
+	if len(result) == 0 {
+		fmt.Println(j)
+	}
+	return server.FilterReadMesages(result), nil
+}
+
+func (server *LongPollServer) FilterReadMesages(messages []*Message) (result []*Message) {
+	for _, m := range messages {
+		t, ok := server.ReadMessages[m.ID]
+		if ok {
+			if time.Since(t).Minutes() > 1 {
+				delete(server.ReadMessages, m.ID)
+			}
+		} else {
+			result = append(result, m)
+			server.ReadMessages[m.ID] = time.Now()
+		}
+	}
+	return result
 }

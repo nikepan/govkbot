@@ -24,13 +24,10 @@ type VKBot struct {
 	msgHandlers      map[string]func(*Message) string
 	errorHandler     func(*Message, error)
 	LastMsg          int
-	markedMessages   map[int]*Message
 	lastUserMessages map[int]int
 	lastChatMessages map[int]int
 	autoFriend       bool
-	history          *HistoryReader
 	LongPoll  		 *LongPollServer
-	readMessages   map[int]time.Time
 }
 
 //API - bot API
@@ -47,12 +44,9 @@ func newBot() *VKBot {
 	return &VKBot{
 		msgRoutes:        make(map[string]func(*Message) string),
 		actionRoutes:     make(map[string]func(*Message) string),
-		markedMessages:   make(map[int]*Message),
 		lastUserMessages: make(map[int]int),
 		lastChatMessages: make(map[int]int),
-		history: new(HistoryReader),
 		LongPoll: API.GetLongPollServer(false, longPollVersion),
-		readMessages: make(map[int]time.Time),
 	}
 }
 
@@ -164,7 +158,6 @@ func RouteAction(m *Message) (replies []string, err error) {
 		debugPrint("route action: %+v\n", m.Action)
 		for k, v := range bot.actionRoutes {
 			if m.Action == k {
-				bot.markedMessages[m.ID] = m
 				msg := v(m)
 				if msg != "" {
 					replies = append(replies, msg)
@@ -185,21 +178,11 @@ func RouteMessage(m *Message) (replies []string, err error) {
 		replies, err = RouteAction(m)
 		return replies, err
 	}
-	marked := false
 	for k, v := range bot.msgRoutes {
 		if HasPrefix(message, k) {
 			msg := v(m)
 			if msg != "" {
-				marked = true
-				_, ok := bot.markedMessages[m.ID]
-				if ok {
-					delete(bot.markedMessages, m.ID)
-				}
 				replies = append(replies, msg)
-			} else {
-				if !marked {
-					bot.markedMessages[m.ID] = m
-				}
 			}
 		}
 	}
@@ -226,29 +209,12 @@ func RouteMessages(messages []*Message) (result map[*Message][]string) {
 	return result
 }
 
-func FilterReadMesages(messages []*Message) (result []*Message) {
-	for _, m := range messages {
-		t, ok := bot.readMessages[m.ID]
-		if ok {
-			if time.Since(t).Minutes() > 1 {
-				delete(bot.readMessages, m.ID)
-			}
-		} else {
-			result = append(result, m)
-			bot.readMessages[m.ID] = time.Now()
-		}
-	}
-	return result
-}
-
 // MainRoute - main router func. Working cycle Listen.
 func MainRoute() {
-	bot.markedMessages = make(map[int]*Message)
 	messages, err := bot.LongPoll.GetLongPollMessages()
 	if err != nil {
 		sendError(nil, err)
 	}
-	messages = FilterReadMesages(messages)
 	fmt.Println("inbox: ", messages)
 	replies := RouteMessages(messages)
 	for m, msgs := range replies {
@@ -261,10 +227,6 @@ func MainRoute() {
 				}
 			}
 		}
-	}
-
-	for _, m := range bot.markedMessages {
-		m.MarkAsRead()
 	}
 }
 
