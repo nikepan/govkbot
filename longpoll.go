@@ -49,7 +49,7 @@ type LongPollUpdateNum []int64
 
 type LongPollResponse struct {
 	Ts uint
-	Updates []interface{}
+	Messages []*Message
 }
 
 type Attachment struct {
@@ -199,17 +199,15 @@ func GetLongPollResponse(buf []byte) (*LongPollResponse, error) {
 }
 
 
-func GetLongPollMessage(resp []interface{}) *LongPollMessage {
-	message := LongPollMessage{}
-	mt, _ := resp[0].(json.Number).Int64()
-	message.MessageType = int(mt)
+func GetLongPollMessage(resp []interface{}) *Message {
+	message := Message{}
 	mid, _ := resp[1].(json.Number).Int64()
-	message.MessageID = int(mid)
+	message.ID = int(mid)
 	flags, _ := resp[2].(json.Number).Int64()
 	message.Flags = int(flags)
 	message.PeerID, _ = resp[3].(json.Number).Int64()
 	message.Timestamp, _ = resp[4].(json.Number).Int64()
-	message.Text =resp[5].(string)
+	message.Body =resp[5].(string)
 	return &message
 }
 
@@ -222,27 +220,36 @@ func (server *LongPollServer) GetLongPollMessages() ([]*Message, error) {
 	return messages, nil
 }
 
-func (server *LongPollServer) ParseLongPollMessages(j string) ([]*Message, error) {
-	//fmt.Println(j)
-	count := gjson.Get(j, "updates.#")
-	result := []*Message{}
-	for i := 0; i < int(count.Int()); i++ {
-		eventType := gjson.Get(j, "updates."+strconv.Itoa(i)+".0")
-		if eventType.Int() == 4 {
-			out := gjson.Get(j, "updates."+strconv.Itoa(i)+".2").Int() & 2
+func (server *LongPollServer) ParseLongPollMessages(j string) (*LongPollResponse, error) {
+	d := json.NewDecoder(strings.NewReader(j))
+	d.UseNumber()
+	var lp interface{}
+	if err := d.Decode(&lp); err != nil {
+		return nil, err
+	}
+	lpMap := lp.(map[string]interface{})
+	result := LongPollResponse{Messages: []*Message{}}
+	ts, _ := lpMap["ts"].(json.Number).Int64()
+	result.Ts = uint(ts)
+	updates := lpMap["updates"].([]interface{})
+	for _, event := range updates {
+		el := event.([]interface{})
+		eventType := el[0].(int)
+		if eventType == 4 {
+			out := el[2].(int) & 2
 			if out == 0 {
 				msg := Message{}
-				msg.ID = int(gjson.Get(j, "updates."+strconv.Itoa(i)+".1").Int())
-				msg.Body = gjson.Get(j, "updates."+strconv.Itoa(i)+".5").String()
-				msg.UserID = int(gjson.Get(j, "updates."+strconv.Itoa(i)+".6.from").Int())
-				msg.PeerID = int(gjson.Get(j, "updates."+strconv.Itoa(i)+".3").Int())
+				msg.ID = el[1].(int)
+				msg.Body = el[5].(string)
+				msg.UserID = el[6].(map[string]interface{})["from"].(int)
+				msg.PeerID = el[3].(int64)
 				if msg.UserID == 0 {
-					msg.UserID = msg.PeerID
+					msg.UserID = int(msg.PeerID)
 				} else {
-					msg.ChatID = msg.PeerID - ChatPrefix
+					msg.ChatID = int(msg.PeerID - ChatPrefix)
 				}
 				msg.Date = int(gjson.Get(j, "updates."+strconv.Itoa(i)+".4").Int())
-				result = append(result, &msg)
+				result.Messages = append(result.Messages, &msg)
 				if msg.UserID == 3759927 {
 					fmt.Println(msg)
 					fmt.Println(j)
@@ -250,10 +257,11 @@ func (server *LongPollServer) ParseLongPollMessages(j string) ([]*Message, error
 			}
 		}
 	}
-	if len(result) == 0 {
+	if len(result.Messages) == 0 {
 		fmt.Println(j)
 	}
-	return server.FilterReadMesages(result), nil
+	result.Messages = server.FilterReadMesages(result.Messages)
+	return &result, nil
 }
 
 func (server *LongPollServer) FilterReadMesages(messages []*Message) (result []*Message) {

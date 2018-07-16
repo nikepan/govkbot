@@ -11,12 +11,14 @@ type Message struct {
 	Out       int
 	UserID    int `json:"user_id"`
 	ChatID    int `json:"chat_id"`
-	PeerID    int `json:"peer_id"`
+	PeerID    int64 `json:"peer_id"`
 	ReadState int `json:"read_state"`
 	Title     string
 	Body      string
 	Action    string
 	ActionMID int `json:"action_mid"`
+	Flags int
+	Timestamp int64
 }
 
 // Messages - VK Messages
