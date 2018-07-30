@@ -10,6 +10,7 @@ import (
 	"time"
 )
 
+// H - simple object struct
 type H map[string]string
 
 // VkAPI - api config
@@ -72,6 +73,7 @@ func (api *VkAPI) Call(method string, params map[string]string) ([]byte, error) 
 	return buf, err
 }
 
+// CallMethod - call VK API method by name to interfce
 func (api *VkAPI) CallMethod(method string, params map[string]string, result interface{}) error {
 	buf, err := api.Call(method, params)
 	if err != nil {
@@ -203,11 +205,11 @@ func (m Message) MarkAsRead() (err error) {
 	return nil
 }
 
-//SendChatMessage sending a message to chat
-func (api *VkAPI) SendPeerMessage(peerID int, msg string) (id int, err error) {
+//SendPeerMessage sending a message to chat
+func (api *VkAPI) SendPeerMessage(peerID int64, msg string) (id int, err error) {
 	r := SimpleResponse{}
 	err = api.CallMethod(apiMessagesSend, H{
-		"peer_id": strconv.Itoa(peerID),
+		"peer_id": strconv.FormatInt(peerID, 10),
 		"message": msg,
 	}, &r)
 	return r.Response, err

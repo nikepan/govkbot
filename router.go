@@ -1,11 +1,11 @@
 package govkbot
 
 import (
+	"fmt"
 	"log"
 	"strconv"
 	"strings"
 	"time"
-	"fmt"
 )
 
 const (
@@ -27,7 +27,7 @@ type VKBot struct {
 	lastUserMessages map[int]int
 	lastChatMessages map[int]int
 	autoFriend       bool
-	LongPoll  		 *LongPollServer
+	LongPoll         *LongPollServer
 }
 
 //API - bot API
@@ -46,7 +46,7 @@ func newBot() *VKBot {
 		actionRoutes:     make(map[string]func(*Message) string),
 		lastUserMessages: make(map[int]int),
 		lastChatMessages: make(map[int]int),
-		LongPoll: API.GetLongPollServer(false, longPollVersion),
+		LongPoll:         API.GetLongPollServer(false, longPollVersion),
 	}
 }
 

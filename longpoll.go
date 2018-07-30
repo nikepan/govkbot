@@ -1,45 +1,47 @@
 package govkbot
 
 import (
-	"strconv"
-	"net/url"
-	"net/http"
-	"time"
-	"io/ioutil"
 	"encoding/json"
-	"strings"
-	"github.com/tidwall/gjson"
-	"github.com/labstack/gommon/log"
-	"fmt"
 	"errors"
+	"fmt"
+	"io/ioutil"
+	"net/http"
+	"net/url"
+	"strconv"
+	"strings"
+	"time"
+
+	"github.com/labstack/gommon/log"
 )
 
 const DefaultWait = 25
 const (
-	LongPollModeGetAttachments = 2
+	LongPollModeGetAttachments    = 2
 	LongPollModeGetExtendedEvents = 8
-	LongPollModeGetPts = 32
-	LongPollModeGetExtraData = 64
-	LongPollModeGetRandomID = 128
+	LongPollModeGetPts            = 32
+	LongPollModeGetExtraData      = 64
+	LongPollModeGetRandomID       = 128
 )
 const DefaultMode = LongPollModeGetAttachments
 const DefaultVersion = 2
 const ChatPrefix = 2000000000
 
+// LongPollServer - longpoll server structure
 type LongPollServer struct {
-	Key    string
-	Server string
-	Ts     int
-	Wait int
-	Mode int
-	Version int
+	Key             string
+	Server          string
+	Ts              int
+	Wait            int
+	Mode            int
+	Version         int
 	RequestInterval int
-	NeedPts bool
-	Api *VkAPI
-	LpVersion int
-	ReadMessages map[int]time.Time
+	NeedPts         bool
+	API             *VkAPI
+	LpVersion       int
+	ReadMessages    map[int]time.Time
 }
 
+// LongPollServerResponse - response format for longpoll info
 type LongPollServerResponse struct {
 	Response LongPollServer
 }
@@ -48,48 +50,48 @@ type LongPollUpdate []interface{}
 type LongPollUpdateNum []int64
 
 type LongPollResponse struct {
-	Ts uint
+	Ts       uint
 	Messages []*Message
 }
 
 type Attachment struct {
-	AttachType string
-	Attach string
-	Fwd string
-	From int
-	Geo int
-	GeoProvider int
-	Title string
+	AttachType      string
+	Attach          string
+	Fwd             string
+	From            int
+	Geo             int
+	GeoProvider     int
+	Title           string
 	AttachProductID int
-	AttachPhoto string
-	AttachTitle string
-	AttachDesc string
-	AttachURL string
-	Emoji bool
-	FromAdmin int
-	SourceAct string
-	SourceMid int
+	AttachPhoto     string
+	AttachTitle     string
+	AttachDesc      string
+	AttachURL       string
+	Emoji           bool
+	FromAdmin       int
+	SourceAct       string
+	SourceMid       int
 }
 
 type LongPollMessage struct {
 	MessageType int
-	MessageID int
-	Flags int
-	PeerID int64
-	Timestamp int64
-	Text string
+	MessageID   int
+	Flags       int
+	PeerID      int64
+	Timestamp   int64
+	Text        string
 	Attachments []Attachment
-	RandomID int
+	RandomID    int
 }
 
 type FailResponse struct {
-	Failed int
-	Ts     int
+	Failed     int
+	Ts         int
 	MinVersion int `json:"min_version"`
 	MaxVersion int `json:"max_version"`
 }
 
-
+// GetLongPollServer - get longpoll server
 func (api *VkAPI) GetLongPollServer(needPts bool, lpVersion int) (resp *LongPollServer) {
 	server := LongPollServer{}
 	server.NeedPts = needPts
@@ -97,11 +99,12 @@ func (api *VkAPI) GetLongPollServer(needPts bool, lpVersion int) (resp *LongPoll
 	server.Mode = DefaultMode
 	server.Version = DefaultVersion
 	server.RequestInterval = api.RequestInterval
-	server.LpVersion =lpVersion
+	server.LpVersion = lpVersion
 	server.ReadMessages = make(map[int]time.Time)
 	return &server
 }
 
+// Init - init longpoll server
 func (server *LongPollServer) Init() (err error) {
 	r := LongPollServerResponse{}
 	pts := 0
@@ -110,7 +113,7 @@ func (server *LongPollServer) Init() (err error) {
 	}
 	err = API.CallMethod("messages.getLongPollServer", H{
 		"need_pts": strconv.Itoa(pts),
-		"message": strconv.Itoa(server.LpVersion),
+		"message":  strconv.Itoa(server.LpVersion),
 	}, &r)
 	server.Wait = DefaultWait
 	server.Mode = DefaultMode
@@ -122,6 +125,7 @@ func (server *LongPollServer) Init() (err error) {
 	return err
 }
 
+// Request - make request to longpoll server
 func (server *LongPollServer) Request() ([]byte, error) {
 	var err error
 
@@ -139,7 +143,7 @@ func (server *LongPollServer) Request() ([]byte, error) {
 	parameters.Add("key", server.Key)
 	parameters.Add("mode", strconv.Itoa(DefaultMode))
 	parameters.Add("version", strconv.Itoa(server.Version))
-	query := "https://"+server.Server+"?"+parameters.Encode()
+	query := "https://" + server.Server + "?" + parameters.Encode()
 	if server.Server == "test" {
 		content, err := ioutil.ReadFile("./mocks/longpoll.json")
 		return content, err
@@ -180,25 +184,9 @@ func (server *LongPollServer) Request() ([]byte, error) {
 	default:
 		return buf, nil
 	}
-	return buf, nil
 }
 
-func GetLongPollResponse(buf []byte) (*LongPollResponse, error) {
-	d := json.NewDecoder(strings.NewReader(string(buf)))
-	d.UseNumber()
-	var lp interface{}
-	if err := d.Decode(&lp); err != nil {
-		return nil, err
-	}
-	lpMap := lp.(map[string]interface{})
-	result := LongPollResponse{}
-	ts, _ := lpMap["ts"].(json.Number).Int64()
-	result.Ts = uint(ts)
-	result.Updates = lpMap["updates"].([]interface{})
-	return &result, nil
-}
-
-
+// GetLongPollMessage - get message from longpoll json row
 func GetLongPollMessage(resp []interface{}) *Message {
 	message := Message{}
 	mid, _ := resp[1].(json.Number).Int64()
@@ -207,19 +195,33 @@ func GetLongPollMessage(resp []interface{}) *Message {
 	message.Flags = int(flags)
 	message.PeerID, _ = resp[3].(json.Number).Int64()
 	message.Timestamp, _ = resp[4].(json.Number).Int64()
-	message.Body =resp[5].(string)
+	message.Body = resp[5].(string)
 	return &message
 }
 
+// GetLongPollMessages - get messages via longpoll
 func (server *LongPollServer) GetLongPollMessages() ([]*Message, error) {
 	resp, err := server.Request()
 	if err != nil {
 		return nil, err
 	}
 	messages, err := server.ParseLongPollMessages(string(resp))
-	return messages, nil
+	return messages.Messages, nil
 }
 
+func getJSONInt64(el interface{}) int64 {
+	if el == nil {
+		return 0
+	}
+	v, _ := el.(json.Number).Int64()
+	return v
+}
+
+func getJSONInt(el interface{}) int {
+	return int(getJSONInt64(el))
+}
+
+// ParseLongPollMessages - parse longpoll messages
 func (server *LongPollServer) ParseLongPollMessages(j string) (*LongPollResponse, error) {
 	d := json.NewDecoder(strings.NewReader(j))
 	d.UseNumber()
@@ -234,26 +236,22 @@ func (server *LongPollServer) ParseLongPollMessages(j string) (*LongPollResponse
 	updates := lpMap["updates"].([]interface{})
 	for _, event := range updates {
 		el := event.([]interface{})
-		eventType := el[0].(int)
+		eventType := getJSONInt(el[0])
 		if eventType == 4 {
-			out := el[2].(int) & 2
+			out := getJSONInt(el[2]) & 2
 			if out == 0 {
 				msg := Message{}
-				msg.ID = el[1].(int)
+				msg.ID = getJSONInt(el[1])
 				msg.Body = el[5].(string)
-				msg.UserID = el[6].(map[string]interface{})["from"].(int)
-				msg.PeerID = el[3].(int64)
+				msg.UserID = getJSONInt(el[6].(map[string]interface{})["from"])
+				msg.PeerID = getJSONInt64(el[3])
 				if msg.UserID == 0 {
 					msg.UserID = int(msg.PeerID)
 				} else {
 					msg.ChatID = int(msg.PeerID - ChatPrefix)
 				}
-				msg.Date = int(gjson.Get(j, "updates."+strconv.Itoa(i)+".4").Int())
+				msg.Date = getJSONInt(el[4])
 				result.Messages = append(result.Messages, &msg)
-				if msg.UserID == 3759927 {
-					fmt.Println(msg)
-					fmt.Println(j)
-				}
 			}
 		}
 	}
@@ -264,6 +262,7 @@ func (server *LongPollServer) ParseLongPollMessages(j string) (*LongPollResponse
 	return &result, nil
 }
 
+// FilterReadMesages - filter read messages
 func (server *LongPollServer) FilterReadMesages(messages []*Message) (result []*Message) {
 	for _, m := range messages {
 		t, ok := server.ReadMessages[m.ID]

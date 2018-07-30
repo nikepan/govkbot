@@ -1,12 +1,11 @@
 package govkbot
 
 import (
-	"testing"
 	"encoding/json"
 	"log"
 	"strings"
+	"testing"
 )
-
 
 func TestGetMessage(t *testing.T) {
 
@@ -19,7 +18,7 @@ func TestGetMessage(t *testing.T) {
 	}
 	log.Printf("%+v\n", lp)
 	message := GetLongPollMessage(lp.([]interface{}))
-	if message.Text != "тест" {
+	if message.Body != "тест" {
 		t.Error("wrong longpoll message")
 	}
 }
@@ -32,15 +31,15 @@ func TestLongPollServer_ParseLongPollMessages(t *testing.T) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	for _, msg := range messages {
+	for _, msg := range messages.Messages {
 		if msg.Body == "" {
 			t.Error("empty message")
 		}
 	}
-	if len(messages) != 1 {
+	if len(messages.Messages) != 1 {
 		t.Error("wrong messages count")
 	}
-	if messages[0].Body != "hello" {
-		t.Error("wrong messages text", messages[0].Body)
+	if messages.Messages[0].Body != "hello" {
+		t.Error("wrong messages text", messages.Messages[0].Body)
 	}
 }
