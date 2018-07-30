@@ -1,6 +1,7 @@
 package govkbot
 
 import (
+	"fmt"
 	"log"
 	"strconv"
 	"strings"
@@ -12,6 +13,7 @@ const (
 	vkAPIVer        = "5.52"
 	messagesCount   = 200
 	requestInterval = 400 // 3 requests per second VK limit
+	longPollVersion = 3
 )
 
 // VKBot - bot config
@@ -22,16 +24,16 @@ type VKBot struct {
 	msgHandlers      map[string]func(*Message) string
 	errorHandler     func(*Message, error)
 	LastMsg          int
-	markedMessages   map[int]*Message
 	lastUserMessages map[int]int
 	lastChatMessages map[int]int
 	autoFriend       bool
+	LongPoll         *LongPollServer
 }
-
-var bot = newBot()
 
 //API - bot API
 var API = newAPI()
+
+var bot = newBot()
 
 // SetDebug - enable/disable debug messages logging
 func SetDebug(debug bool) {
@@ -42,9 +44,9 @@ func newBot() *VKBot {
 	return &VKBot{
 		msgRoutes:        make(map[string]func(*Message) string),
 		actionRoutes:     make(map[string]func(*Message) string),
-		markedMessages:   make(map[int]*Message),
 		lastUserMessages: make(map[int]int),
 		lastChatMessages: make(map[int]int),
+		LongPoll:         API.GetLongPollServer(false, longPollVersion),
 	}
 }
 
@@ -156,7 +158,6 @@ func RouteAction(m *Message) (replies []string, err error) {
 		debugPrint("route action: %+v\n", m.Action)
 		for k, v := range bot.actionRoutes {
 			if m.Action == k {
-				bot.markedMessages[m.ID] = m
 				msg := v(m)
 				if msg != "" {
 					replies = append(replies, msg)
@@ -177,21 +178,11 @@ func RouteMessage(m *Message) (replies []string, err error) {
 		replies, err = RouteAction(m)
 		return replies, err
 	}
-	marked := false
 	for k, v := range bot.msgRoutes {
 		if HasPrefix(message, k) {
 			msg := v(m)
 			if msg != "" {
-				marked = true
-				_, ok := bot.markedMessages[m.ID]
-				if ok {
-					delete(bot.markedMessages, m.ID)
-				}
 				replies = append(replies, msg)
-			} else {
-				if !marked {
-					bot.markedMessages[m.ID] = m
-				}
 			}
 		}
 	}
@@ -220,14 +211,15 @@ func RouteMessages(messages []*Message) (result map[*Message][]string) {
 
 // MainRoute - main router func. Working cycle Listen.
 func MainRoute() {
-	bot.markedMessages = make(map[int]*Message)
-	messages, err := GetMessages()
+	messages, err := bot.LongPoll.GetLongPollMessages()
 	if err != nil {
 		sendError(nil, err)
 	}
+	fmt.Println("inbox: ", messages)
 	replies := RouteMessages(messages)
 	for m, msgs := range replies {
 		for _, msg := range msgs {
+			fmt.Println("ountbox: ", msg)
 			if msg != "" {
 				_, err = m.Reply(msg)
 				if err != nil {
@@ -240,10 +232,6 @@ func MainRoute() {
 				}
 			}
 		}
-	}
-
-	for _, m := range bot.markedMessages {
-		m.MarkAsRead()
 	}
 }
 

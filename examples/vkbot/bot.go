@@ -19,7 +19,7 @@ func getMeMessage(uid int) (reply string) {
 }
 
 func anyHandler(m *govkbot.Message) (reply string) {
-	notifyAdmin(fmt.Sprintf("Command %+v by user vk.com/id%+v in chat %+v", m.Body, m.UserID, m.Title))
+	notifyAdmin(fmt.Sprintf("Command %+v by user vk.com/id%+v in chat %+v", m.Body, m.UserID, m.PeerID))
 	return reply
 }
 
