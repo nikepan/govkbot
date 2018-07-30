@@ -243,7 +243,10 @@ func (server *LongPollServer) ParseLongPollMessages(j string) (*LongPollResponse
 				msg := Message{}
 				msg.ID = getJSONInt(el[1])
 				msg.Body = el[5].(string)
-				msg.UserID = getJSONInt(el[6].(map[string]interface{})["from"])
+				userID := el[6].(map[string]interface{})["from"]
+				if userID != nil {
+					msg.UserID, _ = strconv.Atoi(userID.(string))
+				}
 				msg.PeerID = getJSONInt64(el[3])
 				if msg.UserID == 0 {
 					msg.UserID = int(msg.PeerID)
