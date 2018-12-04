@@ -209,8 +209,9 @@ func (m Message) MarkAsRead() (err error) {
 func (api *VkAPI) SendPeerMessage(peerID int64, msg string) (id int, err error) {
 	r := SimpleResponse{}
 	err = api.CallMethod(apiMessagesSend, H{
-		"peer_id": strconv.FormatInt(peerID, 10),
-		"message": msg,
+		"peer_id":          strconv.FormatInt(peerID, 10),
+		"message":          msg,
+		"dont_parse_links": "1",
 	}, &r)
 	return r.Response, err
 }
@@ -219,8 +220,9 @@ func (api *VkAPI) SendPeerMessage(peerID int64, msg string) (id int, err error) 
 func (api *VkAPI) SendChatMessage(chatID int, msg string) (id int, err error) {
 	r := SimpleResponse{}
 	err = api.CallMethod(apiMessagesSend, H{
-		"chat_id": strconv.Itoa(chatID),
-		"message": msg,
+		"chat_id":          strconv.Itoa(chatID),
+		"message":          msg,
+		"dont_parse_links": "1",
 	}, &r)
 	return r.Response, err
 }
@@ -230,8 +232,9 @@ func (api *VkAPI) SendMessage(userID int, msg string) (id int, err error) {
 	r := SimpleResponse{}
 	if msg != "" {
 		err = api.CallMethod(apiMessagesSend, H{
-			"user_id": strconv.Itoa(userID),
-			"message": msg,
+			"user_id":          strconv.Itoa(userID),
+			"message":          msg,
+			"dont_parse_links": "1",
 		}, &r)
 	}
 	return r.Response, err
