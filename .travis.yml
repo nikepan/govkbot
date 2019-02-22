@@ -1,11 +1,14 @@
 language: go
 sudo: false
 go:
-  - 1.9.7
-  - 1.10.3
+  - 1.11.5
   - tip
 
+env:
+  GO111MODULE=on
+
 script:
+  - go mod download
   - go test -v -covermode=count -coverprofile=coverage.out
 
 after_success:
