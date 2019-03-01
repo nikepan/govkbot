@@ -243,7 +243,9 @@ func Listen(token string, url string, ver string, adminID int) {
 	if err != nil {
 		sendError(nil, err)
 	}
-	API.UID = u.ID
+	if u != nil {
+		API.UID = u.ID
+	}
 
 	go friendReceiver()
 
@@ -282,10 +284,12 @@ func CheckFriends() {
 }
 
 func friendReceiver() {
-	CheckFriends()
-	c := time.Tick(30 * time.Second)
-	for range c {
+	if API.UID > 0 {
 		CheckFriends()
+		c := time.Tick(30 * time.Second)
+		for range c {
+			CheckFriends()
+		}
 	}
 }
 
