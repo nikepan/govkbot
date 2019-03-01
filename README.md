@@ -8,6 +8,10 @@
 
 This is simple VK.com bot API.
 
+
+> Now bot not work. At 2019-03-01 VK was restrict messages.send for user_tokens. But group token has not rights to members of chats. In few days I will fix part of functions (receive/send messages by longpoll)
+
+
 It can:
 
 * Reply to messages (private and chat)  
