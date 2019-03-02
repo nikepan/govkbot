@@ -26,8 +26,15 @@ const DefaultMode = LongPollModeGetAttachments
 const DefaultVersion = 2
 const ChatPrefix = 2000000000
 
+type LongPollServer interface {
+	Init() (err error)
+	Request() ([]byte, error)
+	GetLongPollMessages() ([]*Message, error)
+	FilterReadMesages(messages []*Message) (result []*Message)
+}
+
 // LongPollServer - longpoll server structure
-type LongPollServer struct {
+type UserLongPollServer struct {
 	Key             string
 	Server          string
 	Ts              int
@@ -42,8 +49,8 @@ type LongPollServer struct {
 }
 
 // LongPollServerResponse - response format for longpoll info
-type LongPollServerResponse struct {
-	Response LongPollServer
+type UserLongPollServerResponse struct {
+	Response UserLongPollServer
 }
 
 type LongPollUpdate []interface{}
@@ -91,22 +98,22 @@ type FailResponse struct {
 	MaxVersion int `json:"max_version"`
 }
 
-// GetLongPollServer - get longpoll server
-func (api *VkAPI) GetLongPollServer(needPts bool, lpVersion int) (resp *LongPollServer) {
-	server := LongPollServer{}
+// NewLongPollServer - get longpoll server
+func NewUserLongPollServer(needPts bool, lpVersion int, requestInterval int) (resp *UserLongPollServer) {
+	server := UserLongPollServer{}
 	server.NeedPts = needPts
 	server.Wait = DefaultWait
 	server.Mode = DefaultMode
 	server.Version = DefaultVersion
-	server.RequestInterval = api.RequestInterval
+	server.RequestInterval = requestInterval
 	server.LpVersion = lpVersion
 	server.ReadMessages = make(map[int]time.Time)
 	return &server
 }
 
 // Init - init longpoll server
-func (server *LongPollServer) Init() (err error) {
-	r := LongPollServerResponse{}
+func (server *UserLongPollServer) Init() (err error) {
+	r := UserLongPollServerResponse{}
 	pts := 0
 	if server.NeedPts {
 		pts = 1
@@ -126,7 +133,7 @@ func (server *LongPollServer) Init() (err error) {
 }
 
 // Request - make request to longpoll server
-func (server *LongPollServer) Request() ([]byte, error) {
+func (server *UserLongPollServer) Request() ([]byte, error) {
 	var err error
 
 	if server.Server == "" {
@@ -156,7 +163,7 @@ func (server *LongPollServer) Request() ([]byte, error) {
 	}
 	buf, err := ioutil.ReadAll(resp.Body)
 	time.Sleep(time.Duration(time.Millisecond * time.Duration(server.RequestInterval)))
-	debugPrint("longpoll vk resp: %+v\n", string(buf))
+	//debugPrint("longpoll vk resp: %+v\n", string(buf))
 
 	failResp := FailResponse{}
 	err = json.Unmarshal(buf, &failResp)
@@ -200,7 +207,7 @@ func GetLongPollMessage(resp []interface{}) *Message {
 }
 
 // GetLongPollMessages - get messages via longpoll
-func (server *LongPollServer) GetLongPollMessages() ([]*Message, error) {
+func (server *UserLongPollServer) GetLongPollMessages() ([]*Message, error) {
 	resp, err := server.Request()
 	if err != nil {
 		return nil, err
@@ -222,7 +229,7 @@ func getJSONInt(el interface{}) int {
 }
 
 // ParseLongPollMessages - parse longpoll messages
-func (server *LongPollServer) ParseLongPollMessages(j string) (*LongPollResponse, error) {
+func (server *UserLongPollServer) ParseLongPollMessages(j string) (*LongPollResponse, error) {
 	d := json.NewDecoder(strings.NewReader(j))
 	d.UseNumber()
 	var lp interface{}
@@ -254,6 +261,7 @@ func (server *LongPollServer) ParseLongPollMessages(j string) (*LongPollResponse
 					msg.ChatID = int(msg.PeerID - ChatPrefix)
 				}
 				msg.Date = getJSONInt(el[4])
+				fmt.Println(msg.Body)
 				result.Messages = append(result.Messages, &msg)
 			}
 		}
@@ -266,7 +274,7 @@ func (server *LongPollServer) ParseLongPollMessages(j string) (*LongPollResponse
 }
 
 // FilterReadMesages - filter read messages
-func (server *LongPollServer) FilterReadMesages(messages []*Message) (result []*Message) {
+func (server *UserLongPollServer) FilterReadMesages(messages []*Message) (result []*Message) {
 	for _, m := range messages {
 		t, ok := server.ReadMessages[m.ID]
 		if ok {

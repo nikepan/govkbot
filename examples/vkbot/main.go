@@ -1,8 +1,9 @@
 package main
 
 import (
-	"github.com/nikepan/govkbot"
 	"log"
+
+	"github.com/nikepan/govkbot"
 )
 
 var config configuration

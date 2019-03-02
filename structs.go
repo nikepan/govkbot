@@ -4,6 +4,12 @@ import (
 	"strings"
 )
 
+// Mention - user mention in message
+type Mention struct {
+	ID   int
+	Name string
+}
+
 // Message - VK message struct
 type Message struct {
 	ID        int
@@ -58,6 +64,8 @@ type User struct {
 	Relation    int    `json:"relation"`
 	Hidden      int    `json:"hidden"`
 	Deactivated string `json:"deactivated"`
+	IsAdmin     bool   `json:"is_admin"`
+	IsOwner     bool   `json:"is_owner"`
 }
 
 // FullName - returns full name of user
@@ -71,9 +79,58 @@ func (u *User) FullName() string {
 // VKUsers - Users list. Can be sort by full name
 type VKUsers []*User
 
+// MemberItem - conversation item
+type MemberItem struct {
+	MemberID  int  `json:"member_id"`
+	JoinDate  int  `json:"join_date"`
+	IsOwner   bool `json:"is_owner"`
+	IsAdmin   bool `json:"is_admin"`
+	InvitedBy int  `json:"invited_by"`
+}
+
+// UserProfile - conversation user profile
+type UserProfile struct {
+	ID              int
+	FirstName       string `json:"first_name"`
+	LastName        string `json:"last_name"`
+	IsClosed        bool   `json:"is_closed"`
+	CanAccessClosed bool   `json:"can_access_closed"`
+	Sex             int
+	ScreenName      string `json:"screen_name"`
+	BDate           string `json:"bdate"`
+	Photo           string
+	Online          int
+	City            Geo
+	Country         Geo
+}
+
+// GroupProfile - conversation group profile
+type GroupProfile struct {
+	ID       int
+	Name     string
+	IsClosed int `json:"is_closed"`
+	Type     string
+	Photo50  string
+	Photo100 string
+	Photo200 string
+}
+
+// VKMembers - conversation members info
+type VKMembers struct {
+	Items    []MemberItem
+	Profiles []UserProfile
+	Groups   []GroupProfile
+}
+
 // UsersResponse - VK user response
 type UsersResponse struct {
 	Response VKUsers
+	Error    *VKError
+}
+
+// MembersResponse - VK user response
+type MembersResponse struct {
+	Response VKMembers
 	Error    *VKError
 }
 
@@ -133,8 +190,49 @@ func (err ResponseError) Error() string {
 	return err.err.Error()
 }
 
+//Content - error content
 func (err ResponseError) Content() string {
 	return err.content
+}
+
+//ConversationInfo - conversation info
+type ConversationInfo struct {
+	Peer struct {
+		ID      int
+		Type    string
+		LocalID int `json:"local_id"`
+	}
+	InRead        int `json:"in_read"`
+	OutRead       int `json:"out_read"`
+	LastMessageID int `json:"last_message_id"`
+	CanWrite      struct {
+		Allowed bool
+	} `json:"can_write"`
+	ChatSettings struct {
+		Title        string
+		MembersCount int `json:"members_count"`
+		State        string
+		ActiveIDs    []int `json:"active_ids"`
+		ACL          struct {
+			CanInvite           bool `json:"can_invite"`
+			CanChangeInfo       bool `json:"can_change_info"`
+			CanChangePin        bool `json:"can_change_pin"`
+			CanPromoteUsers     bool `json:"can_promote_users"`
+			CanSeeInviteLink    bool `json:"can_see_invite_link"`
+			CanChangeInviteLink bool `json:"can_change_invite_link"`
+		}
+		IsGroupChannel bool `json:"is_group_channel"`
+		OwnerID        int  `json:"owner_id"`
+	} `json:"chat_settings"`
+}
+
+//ConversationsResponse - resonse of confersations info
+type ConversationsResponse struct {
+	Response struct {
+		Items    []ConversationInfo
+		Profiles []UserProfile
+	}
+	Error *VKError
 }
 
 // ChatInfoResponse - chat info vk struct

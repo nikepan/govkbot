@@ -2,8 +2,9 @@ package main
 
 import (
 	"fmt"
-	"github.com/nikepan/govkbot"
 	"log"
+
+	"github.com/nikepan/govkbot"
 )
 
 type configuration struct {
@@ -24,7 +25,6 @@ func anyHandler(m *govkbot.Message) (reply string) {
 }
 
 func meHandler(m *govkbot.Message) (reply string) {
-	m.Reply("WOW!")
 	return getMeMessage(m.UserID)
 }
 
@@ -86,7 +86,6 @@ func deleteFriendHandler(m *govkbot.Message) (reply string) {
 }
 
 func notifyAdmin(msg string) {
-	log.Printf("VK ERROR: %+v\n", msg)
 	err := govkbot.NotifyAdmin(msg)
 	if err != nil {
 		log.Printf("VK Admin Notify ERROR: %+v\n", msg)

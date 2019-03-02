@@ -14,21 +14,21 @@ func errorHandler(msg *Message, err error) {
 
 func TestHandleMessage(t *testing.T) {
 	HandleMessage("/help", baseHandler)
-	if len(bot.msgRoutes) == 0 {
+	if len(Bot.msgRoutes) == 0 {
 		t.Error("Error adding message handler")
 	}
 }
 
 func TestHandleAction(t *testing.T) {
 	HandleAction("/help", baseHandler)
-	if len(bot.actionRoutes) == 0 {
+	if len(Bot.actionRoutes) == 0 {
 		t.Error("Error adding action handler")
 	}
 }
 
 func TestHandleError(t *testing.T) {
 	HandleError(errorHandler)
-	if bot.errorHandler == nil {
+	if Bot.errorHandler == nil {
 		t.Error("Error set error handler")
 	}
 }
@@ -56,7 +56,7 @@ func TestSetToken(t *testing.T) {
 
 func TestSetAutoFriend(t *testing.T) {
 	SetAutoFriend(true)
-	if !bot.autoFriend {
+	if !Bot.autoFriend {
 		t.Error("Error set auto friend")
 	}
 	SetAutoFriend(false)
@@ -74,7 +74,7 @@ func TestRouteMessage(t *testing.T) {
 	HandleMessage("/help", baseHandler)
 	SetAPI("", "test", "")
 	m := Message{Body: "/help"}
-	replies, err := RouteMessage(&m)
+	replies, err := Bot.RouteMessage(&m)
 	if err != nil {
 		t.Error(err.Error())
 	}
@@ -87,7 +87,7 @@ func TestRouteAction(t *testing.T) {
 	HandleAction("friend_add", baseHandler)
 	SetAPI("", "test", "")
 	m := Message{Action: "friend_add", Body: "ok"}
-	replies, err := RouteAction(&m)
+	replies, err := Bot.RouteAction(&m)
 	if err != nil {
 		t.Error(err.Error())
 	}
@@ -106,7 +106,7 @@ func TestRouteMessages(t *testing.T) {
 	messages = append(messages, &m2)
 	m3 := Message{Body: "skip"}
 	messages = append(messages, &m3)
-	replies := RouteMessages(messages)
+	replies := Bot.RouteMessages(messages)
 
 	if replies[&m1][0] != "/help" {
 		t.Error(wrongValueReturned)
@@ -118,7 +118,7 @@ func TestRouteMessages(t *testing.T) {
 
 func TestGetMessages(t *testing.T) {
 	SetAPI("", "test", "")
-	messages, err := GetMessages()
+	messages, err := Bot.GetMessages()
 	if err != nil {
 		t.Error(err.Error())
 	}
@@ -129,13 +129,14 @@ func TestGetMessages(t *testing.T) {
 
 func TestCheckFriends(t *testing.T) {
 	SetAPI("", "test", "")
-	CheckFriends()
+	Bot.CheckFriends()
 }
 
 func TestMainRoute(t *testing.T) {
 	SetAPI("", "test", "")
 	HandleError(errorHandler)
-	MainRoute()
+	Bot.LongPoll = NewUserLongPollServer(false, longPollVersion, API.RequestInterval)
+	Bot.MainRoute()
 }
 
 func TestNotifyAdmin(t *testing.T) {
