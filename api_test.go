@@ -129,10 +129,11 @@ func TestMessage_MarkAsRead(t *testing.T) {
 	}
 }
 
-func TestMessage_Reply(t *testing.T) {
+func TestVKBot_Reply(t *testing.T) {
 	SetAPI("", "test", "")
+	bot := API.NewBot()
 	m := Message{}
-	mid, err := m.Reply("ok")
+	mid, err := bot.Reply(&m, "ok")
 	if err != nil {
 		t.Error(err.Error())
 	}
@@ -140,7 +141,7 @@ func TestMessage_Reply(t *testing.T) {
 		t.Error(wrongValueReturned)
 	}
 	m = Message{ChatID: 1}
-	mid, err = m.Reply("ok")
+	mid, err = bot.Reply(&m, "ok")
 	if err != nil {
 		t.Error(err.Error())
 	}
@@ -182,5 +183,17 @@ func TestVkAPI_NotifyAdmin(t *testing.T) {
 	err := API.NotifyAdmin("ok")
 	if err != nil {
 		t.Error(err.Error())
+	}
+}
+
+func TestMessage_GetMentions(t *testing.T) {
+	testStr := "/who [id373336876|@sociobesed]"
+	m := Message{Body: testStr}
+	mentions := m.GetMentions()
+	if len(mentions) != 1 {
+		t.Error("wrong mentions count")
+	}
+	if mentions[0].ID != 373336876 {
+		t.Error("wrong mention")
 	}
 }

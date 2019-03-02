@@ -23,10 +23,10 @@ func TestGetMessage(t *testing.T) {
 	}
 }
 
-func TestLongPollServer_ParseLongPollMessages(t *testing.T) {
+func TestUserLongPollServer_ParseLongPollMessages(t *testing.T) {
 	SetAPI("", "test", "")
 	data := `{"ts":1668805076,"updates":[[4,2105994,561,123456,1496404246,"hello",{"title":" ... "},{"attach1_type":"photo","attach1":"123456_417336473","attach2_type":"audio","attach2":"123456_456239018"}]]}`
-	server := API.GetLongPollServer(false, longPollVersion)
+	server := NewUserLongPollServer(false, longPollVersion, 25)
 	messages, err := server.ParseLongPollMessages(data)
 	if err != nil {
 		log.Fatal(err)

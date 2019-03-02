@@ -3,11 +3,15 @@ package govkbot
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
+	"math/rand"
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
+	"unicode/utf8"
 )
 
 // H - simple object struct
@@ -19,25 +23,51 @@ type VkAPI struct {
 	URL             string
 	Ver             string
 	UID             int
+	GroupID         int
 	Lang            string
 	HTTPS           bool
 	AdminID         int
 	MessagesCount   int
 	RequestInterval int
 	DEBUG           bool
+	LastSendedID    int
 }
 
 const (
-	apiUsersGet             = "users.get"
-	apiMessagesGet          = "messages.get"
-	apiMessagesGetChat      = "messages.getChat"
-	apiMessagesGetChatUsers = "messages.getChatUsers"
-	apiMessagesSend         = "messages.send"
-	apiMessagesMarkAsRead   = "messages.markAsRead"
-	apiFriendsGetRequests   = "friends.getRequests"
-	apiFriendsAdd           = "friends.add"
-	apiFriendsDelete        = "friends.delete"
+	apiUsersGet                       = "users.get"
+	apiGroupsGet                      = "groups.getById"
+	apiMessagesGet                    = "messages.get"
+	apiMessagesGetChat                = "messages.getChat"
+	apiMessagesGetConversationsById   = "messages.getConversationsById"
+	apiMessagesGetChatUsers           = "messages.getChatUsers"
+	apiMessagesGetConversationMembers = "messages.getConversationMembers"
+	apiMessagesSend                   = "messages.send"
+	apiMessagesMarkAsRead             = "messages.markAsRead"
+	apiFriendsGetRequests             = "friends.getRequests"
+	apiFriendsAdd                     = "friends.add"
+	apiFriendsDelete                  = "friends.delete"
 )
+
+func (api *VkAPI) IsGroup() bool {
+	if api.GroupID != 0 {
+		return true
+	} else if api.UID != 0 {
+		return false
+	}
+
+	g, err := API.CurrentGroup()
+	if err != nil || g.ID == 0 {
+		u, err := API.Me()
+		if err != nil || u == nil {
+			fmt.Printf("Get current user/group error %+v\n", err)
+		} else {
+			api.UID = u.ID
+		}
+	} else {
+		api.GroupID = g.ID
+	}
+	return api.GroupID != 0
+}
 
 // Call - main api call method
 func (api *VkAPI) Call(method string, params map[string]string) ([]byte, error) {
@@ -118,27 +148,146 @@ func (api *VkAPI) Me() (*User, error) {
 	return nil, err
 }
 
+// CurrentGroup - get current group info
+func (api *VkAPI) CurrentGroup() (*User, error) {
+
+	r := UsersResponse{}
+	err := api.CallMethod(apiGroupsGet, H{"fields": "screen_name"}, &r)
+
+	if len(r.Response) > 0 {
+		debugPrint("me: %+v - %+v\n", r.Response[0].ID, r.Response[0].ScreenName)
+		return r.Response[0], err
+	}
+	return nil, err
+}
+
 // GetChatInfo - returns Chat info by id
-func (api *VkAPI) GetChatInfo(chatID int) (*ChatInfo, error) {
+func (api *VkAPI) GetUserChatInfo(chatID int) (*ChatInfo, error) {
 	r := ChatInfoResponse{}
 	err := api.CallMethod(apiMessagesGetChat, H{
 		"chat_id": strconv.Itoa(chatID),
-		"fields":  "photo,city,country",
+		"fields":  "photo,city,country,sex,bdate",
 	}, &r)
 
 	return &r.Response, err
 }
 
+// GetChatInfo - returns Chat info by id
+func (api *VkAPI) GetConversation(chatID int) (*ChatInfo, error) {
+	r := ConversationsResponse{}
+	err := api.CallMethod(apiMessagesGetConversationsById, H{
+		"peer_ids": strconv.Itoa(chatID),
+		"extended": "1",
+		"fields":   "photo,city,country,sex,bdate",
+	}, &r)
+
+	c := r.Response.Items[0]
+	chat := ChatInfo{}
+	chat.ID = c.Peer.ID
+	chat.Type = c.Peer.Type
+	chat.Title = c.ChatSettings.Title
+	chat.AdminID = c.ChatSettings.OwnerID
+
+	chat.Users = make([]*User, 0)
+	for _, u := range r.Response.Profiles {
+		user := User{}
+		user.ID = u.ID
+		user.FirstName = u.FirstName
+		user.LastName = u.LastName
+		user.Photo = u.Photo
+		user.City = u.City
+		user.Country = u.Country
+		user.Sex = u.Sex
+		chat.Users = append(chat.Users, &user)
+	}
+
+	return &chat, err
+}
+
+// GetChatInfo - returns Chat info by id
+func (api *VkAPI) GetChatInfo(chatID int) (*ChatInfo, error) {
+	if api.IsGroup() {
+		return api.GetConversation(chatID)
+	}
+	return api.GetUserChatInfo(chatID)
+}
+
+func (api *VkAPI) GetChatFullInfo(chatID int) (*ChatInfo, error) {
+	info, err := api.GetChatInfo(chatID)
+	if err != nil {
+		return nil, err
+	}
+	members, err := api.GetChatUsers(chatID)
+	if err != nil {
+		return nil, err
+	}
+	if info != nil && members != nil {
+		info.Users = members
+	}
+	return info, err
+}
+
 // GetChatUsers - get chat users
-func (api *VkAPI) GetChatUsers(chatID int) (users []*User, err error) {
+func (api *VkAPI) GetUserChatUsers(chatID int) (users []*User, err error) {
 
 	r := UsersResponse{}
 	err = api.CallMethod(apiMessagesGetChatUsers, H{
 		"chat_id": strconv.Itoa(chatID),
-		"fields":  "photo",
+		"fields":  "photo,city,country,sex,bdate",
 	}, &r)
 
 	return r.Response, err
+}
+
+// GetChatUsers - get chat users
+func (api *VkAPI) GetConversationMembers(chatID int) (users []*User, err error) {
+
+	r := MembersResponse{}
+
+	err = api.CallMethod(apiMessagesGetConversationMembers, H{
+		"peer_id": strconv.Itoa(chatID),
+		"fields":  "photo,city,country,sex,bdate",
+	}, &r)
+
+	users = make([]*User, 0)
+	for _, u := range r.Response.Profiles {
+		user := User{}
+		user.ID = u.ID
+		user.FirstName = u.FirstName
+		user.LastName = u.LastName
+		user.ScreenName = u.ScreenName
+		user.Photo = u.Photo
+		user.Sex = u.Sex
+		user.City = u.City
+		user.Country = u.Country
+		user.BDate = u.BDate
+		for _, i := range r.Response.Items {
+			if i.MemberID == u.ID {
+				user.IsAdmin = i.IsAdmin
+				user.IsOwner = i.IsOwner
+				user.InvitedBy = i.InvitedBy
+			}
+		}
+		users = append(users, &user)
+	}
+
+	return users, err
+}
+
+func (api *VkAPI) GetChatUsers(chatID int) (users []*User, err error) {
+	if api.IsGroup() {
+		return api.GetConversationMembers(chatID)
+	}
+	return api.GetUserChatUsers(chatID)
+}
+
+func FindUser(users []*User, ID int) *User {
+	for _, u := range users {
+		if u.ID == ID {
+			return u
+		}
+	}
+	return nil
 }
 
 // GetFriendRequests - get friend requests
@@ -185,7 +334,7 @@ func (api *VkAPI) User(uid int) (*User, error) {
 	r := UsersResponse{}
 	err := api.CallMethod(apiUsersGet, H{
 		"user_ids": strconv.Itoa(uid),
-		"fields":   "sex,screen_name",
+		"fields":   "sex,screen_name, city, country, bdate",
 	}, &r)
 
 	if err != nil {
@@ -205,13 +354,69 @@ func (m Message) MarkAsRead() (err error) {
 	return nil
 }
 
+func (m Message) GetMentions() []Mention {
+	mentions := make([]Mention, 0)
+	ok := false
+	ustr := ""
+	uname := ""
+	msg := m.Body
+	i := strings.Index(msg, "[id")
+	imax := len(msg)
+	if i >= 0 {
+		i += 2
+		for {
+			i++
+			if i >= imax {
+				break
+			}
+			if '0' <= msg[i] && msg[i] <= '9' {
+				ustr += string(msg[i])
+			} else {
+				ok = true
+				break
+			}
+		}
+		w := 1
+		var runeValue rune
+		for {
+			i += w
+			if i >= imax {
+				ok = false
+				break
+			}
+			runeValue, w = utf8.DecodeRuneInString(msg[i:])
+			if msg[i] != ']' {
+				if msg[i] != '|' {
+					uname += fmt.Sprintf("%c", runeValue) //string(msg[i])
+				}
+			} else {
+				ok = true
+				break
+			}
+		}
+	}
+	if ok {
+		u, err := strconv.Atoi(ustr)
+		if err == nil {
+			mentions = append(mentions, Mention{u, uname})
+		}
+	}
+	return mentions
+}
+
+func (api *VkAPI) GetRandomID() string {
+	return strconv.FormatUint(uint64(rand.Uint32()), 10)
+}
+
 //SendPeerMessage sending a message to chat
 func (api *VkAPI) SendPeerMessage(peerID int64, msg string) (id int, err error) {
 	r := SimpleResponse{}
+	api.LastSendedID++
 	err = api.CallMethod(apiMessagesSend, H{
 		"peer_id":          strconv.FormatInt(peerID, 10),
 		"message":          msg,
 		"dont_parse_links": "1",
+		"random_id":        api.GetRandomID(),
 	}, &r)
 	return r.Response, err
 }
@@ -219,10 +424,12 @@ func (api *VkAPI) SendPeerMessage(peerID int64, msg string) (id int, err error) 
 //SendChatMessage sending a message to chat
 func (api *VkAPI) SendChatMessage(chatID int, msg string) (id int, err error) {
 	r := SimpleResponse{}
+	api.LastSendedID++
 	err = api.CallMethod(apiMessagesSend, H{
 		"chat_id":          strconv.Itoa(chatID),
 		"message":          msg,
 		"dont_parse_links": "1",
+		"random_id":        api.GetRandomID(),
 	}, &r)
 	return r.Response, err
 }
@@ -230,25 +437,16 @@ func (api *VkAPI) SendChatMessage(chatID int, msg string) (id int, err error) {
 //SendMessage sending a message to user
 func (api *VkAPI) SendMessage(userID int, msg string) (id int, err error) {
 	r := SimpleResponse{}
+	api.LastSendedID++
 	if msg != "" {
 		err = api.CallMethod(apiMessagesSend, H{
 			"user_id":          strconv.Itoa(userID),
 			"message":          msg,
 			"dont_parse_links": "1",
+			"random_id":        api.GetRandomID(),
 		}, &r)
 	}
 	return r.Response, err
-}
-
-// Reply - reply message
-func (m Message) Reply(msg string) (id int, err error) {
-	if m.PeerID != 0 {
-		return API.SendPeerMessage(m.PeerID, msg)
-	}
-	if m.ChatID != 0 {
-		return API.SendChatMessage(m.ChatID, msg)
-	}
-	return API.SendMessage(m.UserID, msg)
 }
 
 // NotifyAdmin - send notify to admin
