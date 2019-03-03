@@ -469,7 +469,7 @@ func (api *VkAPI) SendMessage(userID int, msg string) (id int, err error) {
 func NewButton(label string, payload interface{}) Button {
 	button := Button{}
 	button.Action.Type = "text"
-	button.Action.Label = "+"
+	button.Action.Label = label
 	button.Action.Payload = "{}"
 	if payload != nil {
 		jPayoad, err := json.Marshal(payload)
