@@ -9,7 +9,7 @@
 This is simple VK.com bot API.
 
 
-> At 2019-03-01 VK was restrict messages.send for user_tokens. This bot can work with group_token, and access to chat members if has admin rights in chat.
+> At 2019-03-01 VK was restrict messages.send for user_tokens. This bot can work with group_token, and access to chat members if has admin rights in chat. You can use v1.0.1 also, if you need only user_token access.
 
 
 It can:
