@@ -31,7 +31,6 @@ func newAPI() *VkAPI {
 		RequestInterval: requestInterval,
 		DEBUG:           false,
 		HTTPS:           true,
-		LastSendedID:    1,
 	}
 }
 
@@ -65,6 +64,12 @@ func SetLang(lang string) {
 // Function must return string to reply or "" (if no reply)
 func HandleMessage(command string, handler func(*Message) string) {
 	Bot.HandleMessage(command, handler)
+}
+
+// HandleAdvancedMessage - add substr message handler.
+// Function must return string to reply or "" (if no reply)
+func HandleAdvancedMessage(command string, handler func(*Message) Reply) {
+	Bot.HandleAdvancedMessage(command, handler)
 }
 
 // HandleAction - add action handler.

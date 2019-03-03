@@ -78,7 +78,7 @@ func TestRouteMessage(t *testing.T) {
 	if err != nil {
 		t.Error(err.Error())
 	}
-	if replies[0] != "/help" {
+	if replies[0].Msg != "/help" {
 		t.Error(wrongValueReturned)
 	}
 }
@@ -108,10 +108,10 @@ func TestRouteMessages(t *testing.T) {
 	messages = append(messages, &m3)
 	replies := Bot.RouteMessages(messages)
 
-	if replies[&m1][0] != "/help" {
+	if replies[&m1][0].Msg != "/help" {
 		t.Error(wrongValueReturned)
 	}
-	if replies[&m2][0] != "ok" {
+	if replies[&m2][0].Msg != "ok" {
 		t.Error(wrongValueReturned)
 	}
 }

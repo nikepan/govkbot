@@ -10,6 +10,28 @@ type Mention struct {
 	Name string
 }
 
+// Button for keyboard, which sends to user
+type Button struct {
+	Action struct {
+		Type    string `json:"type"`
+		Payload string `json:"payload"`
+		Label   string `json:"label"`
+	} `json:"action"`
+	Color string `json:"color"`
+}
+
+// Keyboard to send for user
+type Keyboard struct {
+	OneTime bool       `json:"one_time"`
+	Buttons [][]Button `json:"buttons"`
+}
+
+//Reply for message
+type Reply struct {
+	Msg      string
+	Keyboard *Keyboard
+}
+
 // Message - VK message struct
 type Message struct {
 	ID        int
@@ -25,6 +47,7 @@ type Message struct {
 	ActionMID int `json:"action_mid"`
 	Flags     int
 	Timestamp int64
+	Payload   string
 }
 
 // Messages - VK Messages

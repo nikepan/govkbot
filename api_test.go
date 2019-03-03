@@ -133,7 +133,7 @@ func TestVKBot_Reply(t *testing.T) {
 	SetAPI("", "test", "")
 	bot := API.NewBot()
 	m := Message{}
-	mid, err := bot.Reply(&m, "ok")
+	mid, err := bot.Reply(&m, Reply{Msg: "ok"})
 	if err != nil {
 		t.Error(err.Error())
 	}
@@ -141,7 +141,7 @@ func TestVKBot_Reply(t *testing.T) {
 		t.Error(wrongValueReturned)
 	}
 	m = Message{ChatID: 1}
-	mid, err = bot.Reply(&m, "ok")
+	mid, err = bot.Reply(&m, Reply{Msg: "ok"})
 	if err != nil {
 		t.Error(err.Error())
 	}
