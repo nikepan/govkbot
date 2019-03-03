@@ -9,7 +9,7 @@
 This is simple VK.com bot API.
 
 
-> Now bot not work. At 2019-03-01 VK was restrict messages.send for user_tokens. But group token has not rights to members of chats. In few days I will fix part of functions (receive/send messages by longpoll)
+> At 2019-03-01 VK was restrict messages.send for user_tokens. This bot can work with group_token, and access to chat members if has admin rights in chat.
 
 
 It can:
