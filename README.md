@@ -40,6 +40,16 @@ func helpHandler(m *govkbot.Message) (reply string) {
   return "help received"
 }
 
+func startHandler(m *govkbot.Message) (reply govkbot.Reply) {
+	keyboard := govkbot.Keyboard{Buttons: make([][]govkbot.Button, 0)}
+	button := govkbot.NewButton("/help", nil)
+	row := make([]govkbot.Button, 0)
+	row = append(row, button)
+	keyboard.Buttons = append(keyboard.Buttons, row)
+
+	return govkbot.Reply{Msg: availableCommands, Keyboard: &keyboard}
+}
+
 func errorHandler(m *govkbot.Message, err error) {
   log.Fatal(err.Error())
 }
@@ -48,6 +58,7 @@ func main() {
     //govkbot.HandleMessage("/", anyHandler)
     //govkbot.HandleMessage("/me", meHandler)
     govkbot.HandleMessage("/help", helpHandler)
+    govkbot.HandleAdvancedMessage("/start", startHandler)
 
     //govkbot.HandleAction("chat_invite_user", inviteHandler)
     //govkbot.HandleAction("chat_kick_user", kickHandler)
