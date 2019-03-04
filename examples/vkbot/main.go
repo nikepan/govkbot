@@ -15,7 +15,7 @@ func main() {
 
 	govkbot.HandleMessage("/", anyHandler) // any commands starts with "/"
 	govkbot.HandleMessage("/me", meHandler)
-	govkbot.HandleMessage("/help", helpHandler)
+	govkbot.HandleAdvancedMessage("/help", helpHandler)
 
 	govkbot.HandleAction("chat_invite_user", inviteHandler)
 	govkbot.HandleAction("chat_kick_user", kickHandler)

@@ -28,8 +28,14 @@ func meHandler(m *govkbot.Message) (reply string) {
 	return getMeMessage(m.UserID)
 }
 
-func helpHandler(m *govkbot.Message) (reply string) {
-	return availableCommands
+func helpHandler(m *govkbot.Message) (reply govkbot.Reply) {
+	keyboard := govkbot.Keyboard{Buttons: make([][]govkbot.Button, 0)}
+	button := govkbot.NewButton("/me", nil)
+	row := make([]govkbot.Button, 0)
+	row = append(row, button)
+	keyboard.Buttons = append(keyboard.Buttons, row)
+
+	return govkbot.Reply{Msg: availableCommands, Keyboard: &keyboard}
 }
 
 func errorHandler(msg *govkbot.Message, err error) {

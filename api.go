@@ -30,7 +30,6 @@ type VkAPI struct {
 	MessagesCount   int
 	RequestInterval int
 	DEBUG           bool
-	LastSendedID    int
 }
 
 const (
@@ -408,10 +407,30 @@ func (api *VkAPI) GetRandomID() string {
 	return strconv.FormatUint(uint64(rand.Uint32()), 10)
 }
 
+//SendAdvancedPeerMessage sending a message to chat
+func (api *VkAPI) SendAdvancedPeerMessage(peerID int64, message Reply) (id int, err error) {
+	r := SimpleResponse{}
+	params := H{
+		"peer_id":          strconv.FormatInt(peerID, 10),
+		"message":          message.Msg,
+		"dont_parse_links": "1",
+		"random_id":        api.GetRandomID(),
+	}
+	if message.Keyboard != nil {
+		keyboard, err := json.Marshal(message.Keyboard)
+		if err != nil {
+			fmt.Printf("ERROR encode keyboard %+v\n", message.Keyboard)
+		} else {
+			params["keyboard"] = string(keyboard)
+		}
+	}
+	err = api.CallMethod(apiMessagesSend, params, &r)
+	return r.Response, err
+}
+
 //SendPeerMessage sending a message to chat
 func (api *VkAPI) SendPeerMessage(peerID int64, msg string) (id int, err error) {
 	r := SimpleResponse{}
-	api.LastSendedID++
 	err = api.CallMethod(apiMessagesSend, H{
 		"peer_id":          strconv.FormatInt(peerID, 10),
 		"message":          msg,
@@ -424,7 +443,6 @@ func (api *VkAPI) SendPeerMessage(peerID int64, msg string) (id int, err error) 
 //SendChatMessage sending a message to chat
 func (api *VkAPI) SendChatMessage(chatID int, msg string) (id int, err error) {
 	r := SimpleResponse{}
-	api.LastSendedID++
 	err = api.CallMethod(apiMessagesSend, H{
 		"chat_id":          strconv.Itoa(chatID),
 		"message":          msg,
@@ -437,7 +455,6 @@ func (api *VkAPI) SendChatMessage(chatID int, msg string) (id int, err error) {
 //SendMessage sending a message to user
 func (api *VkAPI) SendMessage(userID int, msg string) (id int, err error) {
 	r := SimpleResponse{}
-	api.LastSendedID++
 	if msg != "" {
 		err = api.CallMethod(apiMessagesSend, H{
 			"user_id":          strconv.Itoa(userID),
@@ -447,6 +464,21 @@ func (api *VkAPI) SendMessage(userID int, msg string) (id int, err error) {
 		}, &r)
 	}
 	return r.Response, err
+}
+
+func NewButton(label string, payload interface{}) Button {
+	button := Button{}
+	button.Action.Type = "text"
+	button.Action.Label = label
+	button.Action.Payload = "{}"
+	if payload != nil {
+		jPayoad, err := json.Marshal(payload)
+		if err == nil {
+			button.Action.Payload = string(jPayoad)
+		}
+	}
+	button.Color = "default"
+	return button
 }
 
 // NotifyAdmin - send notify to admin

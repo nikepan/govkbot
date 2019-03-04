@@ -10,7 +10,7 @@ import (
 
 // VKBot - bot config
 type VKBot struct {
-	msgRoutes        map[string]func(*Message) string
+	msgRoutes        map[string]msgRoute
 	actionRoutes     map[string]func(*Message) string
 	cmdHandlers      map[string]func(*Message) string
 	msgHandlers      map[string]func(*Message) string
@@ -23,10 +23,15 @@ type VKBot struct {
 	API              *VkAPI
 }
 
+type msgRoute struct {
+	SimpleHandler func(*Message) string
+	Handler       func(*Message) Reply
+}
+
 func (api *VkAPI) NewBot() *VKBot {
 	if api.IsGroup() {
 		return &VKBot{
-			msgRoutes:        make(map[string]func(*Message) string),
+			msgRoutes:        make(map[string]msgRoute),
 			actionRoutes:     make(map[string]func(*Message) string),
 			lastUserMessages: make(map[int]int),
 			lastChatMessages: make(map[int]int),
@@ -35,7 +40,7 @@ func (api *VkAPI) NewBot() *VKBot {
 		}
 	}
 	return &VKBot{
-		msgRoutes:        make(map[string]func(*Message) string),
+		msgRoutes:        make(map[string]msgRoute),
 		actionRoutes:     make(map[string]func(*Message) string),
 		lastUserMessages: make(map[int]int),
 		lastChatMessages: make(map[int]int),
@@ -67,7 +72,13 @@ func (bot *VKBot) ListenGroup(api *VkAPI) error {
 // HandleMessage - add substr message handler.
 // Function must return string to reply or "" (if no reply)
 func (bot *VKBot) HandleMessage(command string, handler func(*Message) string) {
-	bot.msgRoutes[command] = handler
+	bot.msgRoutes[command] = msgRoute{SimpleHandler: handler}
+}
+
+// HandleAdvancedMessage - add substr message handler.
+// Function must return string to reply or "" (if no reply)
+func (bot *VKBot) HandleAdvancedMessage(command string, handler func(*Message) Reply) {
+	bot.msgRoutes[command] = msgRoute{Handler: handler}
 }
 
 // HandleAction - add action handler.
@@ -138,22 +149,31 @@ func (bot *VKBot) RouteAction(m *Message) (replies []string, err error) {
 }
 
 // RouteMessage routes single message
-func (bot *VKBot) RouteMessage(m *Message) (replies []string, err error) {
+func (bot *VKBot) RouteMessage(m *Message) (replies []Reply, err error) {
 	message := strings.TrimSpace(strings.ToLower(m.Body))
 	if HasPrefix(message, "/ ") {
 		message = "/" + TrimPrefix(message, "/ ")
 	}
-	fmt.Printf("r message: %+v\n", m.Body)
 	if m.Action != "" {
-		replies, err = bot.RouteAction(m)
+		actionReplies, err := bot.RouteAction(m)
+		for _, r := range actionReplies {
+			replies = append(replies, Reply{Msg: r})
+		}
 		return replies, err
 	}
-	fmt.Printf("rr message: %+v\n", m.Body)
 	for k, v := range bot.msgRoutes {
 		if HasPrefix(message, k) {
-			msg := v(m)
-			if msg != "" {
-				replies = append(replies, msg)
+			if v.Handler != nil {
+				reply := v.Handler(m)
+				if reply.Msg != "" || reply.Keyboard != nil {
+					replies = append(replies, reply)
+				}
+			} else {
+				msg := v.SimpleHandler(m)
+				if msg != "" {
+					replies = append(replies, Reply{Msg: msg})
+				}
+
 			}
 		}
 	}
@@ -161,8 +181,8 @@ func (bot *VKBot) RouteMessage(m *Message) (replies []string, err error) {
 }
 
 // RouteMessages routes inbound messages
-func (bot *VKBot) RouteMessages(messages []*Message) (result map[*Message][]string) {
-	result = make(map[*Message][]string)
+func (bot *VKBot) RouteMessages(messages []*Message) (result map[*Message][]Reply) {
+	result = make(map[*Message][]Reply)
 	for _, m := range messages {
 		if m.ReadState == 0 {
 			replies, err := bot.RouteMessage(m)
@@ -186,14 +206,14 @@ func (bot *VKBot) MainRoute() {
 	fmt.Println("inbox: ", messages)
 	replies := bot.RouteMessages(messages)
 	for m, msgs := range replies {
-		for _, msg := range msgs {
-			fmt.Println("ountbox: ", msg)
-			if msg != "" {
-				_, err = bot.Reply(m, msg)
+		for _, reply := range msgs {
+			fmt.Println("outbox: ", reply.Msg)
+			if reply.Msg != "" || reply.Keyboard != nil {
+				_, err = bot.Reply(m, reply)
 				if err != nil {
-					log.Printf("Error sending message: '%+v'\n", msg)
+					log.Printf("Error sending message: '%+v'\n", reply)
 					sendError(m, err)
-					_, err = bot.Reply(m, "Cant send message, maybe wrong/china letters?")
+					_, err = bot.Reply(m, Reply{Msg: "Cant send message, maybe wrong/china letters?"})
 					if err != nil {
 						sendError(m, err)
 					}
@@ -204,14 +224,14 @@ func (bot *VKBot) MainRoute() {
 }
 
 // Reply - reply message
-func (bot *VKBot) Reply(m *Message, msg string) (id int, err error) {
+func (bot *VKBot) Reply(m *Message, reply Reply) (id int, err error) {
 	if m.PeerID != 0 {
-		return bot.API.SendPeerMessage(m.PeerID, msg)
+		return bot.API.SendAdvancedPeerMessage(m.PeerID, reply)
 	}
 	if m.ChatID != 0 {
-		return bot.API.SendChatMessage(m.ChatID, msg)
+		return bot.API.SendChatMessage(m.ChatID, reply.Msg)
 	}
-	return bot.API.SendMessage(m.UserID, msg)
+	return bot.API.SendMessage(m.UserID, reply.Msg)
 }
 
 // CheckFriends checking friend invites and matсhes and deletes mutual
