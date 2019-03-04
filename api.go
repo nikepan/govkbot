@@ -179,6 +179,9 @@ func (api *VkAPI) GetConversation(chatID int) (*ChatInfo, error) {
 		"extended": "1",
 		"fields":   "photo,city,country,sex,bdate",
 	}, &r)
+	if err != nil {
+		return nil, err
+	}
 
 	c := r.Response.Items[0]
 	chat := ChatInfo{}
