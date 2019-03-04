@@ -265,9 +265,10 @@ func (api *VkAPI) GetConversationMembers(chatID int) (users []*User, err error) 
 				user.IsAdmin = i.IsAdmin
 				user.IsOwner = i.IsOwner
 				user.InvitedBy = i.InvitedBy
+				users = append(users, &user)
+				break
 			}
 		}
-		users = append(users, &user)
 	}
 
 	return users, err
