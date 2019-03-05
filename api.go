@@ -182,6 +182,9 @@ func (api *VkAPI) GetConversation(chatID int) (*ChatInfo, error) {
 	if err != nil {
 		return nil, err
 	}
+	if len(r.Response.Items) == 0 {
+		return nil, VKError{ErrorMsg: "no conversation returned"}
+	}
 
 	c := r.Response.Items[0]
 	chat := ChatInfo{}
