@@ -35,16 +35,16 @@ type GroupLongPollServerResponse struct {
 type GroupLongPollMessage struct {
 	Type   string
 	Object struct {
-		Date                  int    `json:"date"`
-		FromID                int    `json:"from_id"`
-		ID                    int    `json:"id"`
-		Out                   int    `json:"out"`
-		PeerID                int    `json:"peer_id"`
-		Text                  string `json:"text"`
-		ConversationMessageID int    `json:"conversation_message_id"`
-		// FwdMessages "fwd_messages": []
-		Important bool `json:"important"`
-		RandomID  int  `json:"random_id"`
+		Date                  int                    `json:"date"`
+		FromID                int                    `json:"from_id"`
+		ID                    int                    `json:"id"`
+		Out                   int                    `json:"out"`
+		PeerID                int                    `json:"peer_id"`
+		Text                  string                 `json:"text"`
+		ConversationMessageID int                    `json:"conversation_message_id"`
+		FwdMessages           []GroupLongPollMessage `json:"fwd_messages"`
+		Important             bool                   `json:"important"`
+		RandomID              int                    `json:"random_id"`
 		//Attachments [] `json:"attachments"`
 		IsHidden bool `json:"is_hidden"`
 		Action   struct {
@@ -169,6 +169,32 @@ func (server *GroupLongPollServer) GetLongPollMessages() ([]*Message, error) {
 	return messages.Messages, nil
 }
 
+func (server *GroupLongPollServer) ParseMessage(obj map[string]interface{}) Message {
+	msg := Message{}
+	msg.ID = getJSONInt(obj["id"])
+	msg.Body = obj["text"].(string)
+	userID := getJSONInt(obj["from_id"])
+	if userID != 0 {
+		msg.UserID = userID
+	}
+	msg.PeerID = getJSONInt64(obj["peer_id"])
+	if int64(msg.UserID) == msg.PeerID {
+		msg.ChatID = 0
+	} else {
+		msg.ChatID = int(msg.PeerID)
+	}
+	msg.Date = getJSONInt(obj["date"])
+	fwd, ok := obj["fwd_messages"]
+	if ok {
+		for _, m := range fwd.([]interface{}) {
+			fwdMsg := server.ParseMessage(m.(map[string]interface{}))
+			msg.FwdMessages = append(msg.FwdMessages, fwdMsg)
+		}
+	}
+	fmt.Printf("%+v\n", msg)
+	return msg
+}
+
 // ParseLongPollMessages - parse longpoll messages
 func (server *GroupLongPollServer) ParseLongPollMessages(j string) (*GroupLongPollResponse, error) {
 	//fmt.Printf("\n>>>>>>>>>>>>>updates0: %+v\n\n", j)
@@ -190,20 +216,7 @@ func (server *GroupLongPollServer) ParseLongPollMessages(j string) (*GroupLongPo
 			obj := event.(map[string]interface{})["object"].(map[string]interface{})
 			out := getJSONInt(obj["out"])
 			if out == 0 {
-				msg := Message{}
-				msg.ID = getJSONInt(obj["id"])
-				msg.Body = obj["text"].(string)
-				userID := getJSONInt(obj["from_id"])
-				if userID != 0 {
-					msg.UserID = userID
-				}
-				msg.PeerID = getJSONInt64(obj["peer_id"])
-				if int64(msg.UserID) == msg.PeerID {
-					msg.ChatID = 0
-				} else {
-					msg.ChatID = int(msg.PeerID)
-				}
-				msg.Date = getJSONInt(obj["date"])
+				msg := server.ParseMessage(obj)
 				result.Messages = append(result.Messages, &msg)
 				fmt.Printf("\n>>>>>>>>>>>>>msg: %+v\n\n", msg)
 			}
