@@ -80,9 +80,11 @@ func main() {
     govkbot.Listen(VKToken, "", "", VKAdminID)
 }
 ```
+# Getting group token
 
+Open group manage and select "Work with API"
 
-# Getting token
+# Getting user token (most likely will not work for messages)
 
 You need standalone vk app_id. You can use any app_id from https://vk.com/apps?act=wingames, for example 4775211 
  (Or you can create own app and get app_id on page https://vk.com/editapp?act=create (standalone app))
