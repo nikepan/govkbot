@@ -17,7 +17,9 @@ It can:
 
 Installatioin:
 
-`go get github.com/nikepan/govkbot`
+Use `go mod`
+For old Go versions you can also use
+`go get github.com/nikepan/govkbot/v2`
 
 For work you need get VK access token with rights: messages,friends,offline (see below).
 
@@ -26,7 +28,7 @@ For work you need get VK access token with rights: messages,friends,offline (see
 
 ```Go
 package main
-import "github.com/nikepan/govkbot"
+import "github.com/nikepan/govkbot/2"
 import "log"
 
 var VKAdminID = 3759927
