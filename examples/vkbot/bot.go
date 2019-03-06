@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/nikepan/govkbot"
+	"github.com/nikepan/govkbot/v2"
 )
 
 type configuration struct {
