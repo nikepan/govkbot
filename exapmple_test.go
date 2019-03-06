@@ -2,8 +2,9 @@ package govkbot_test
 
 import (
 	"fmt"
-	"github.com/nikepan/govkbot"
 	"log"
+
+	"github.com/nikepan/govkbot/v2"
 )
 
 func helpHandler(m *govkbot.Message) (reply string) {
