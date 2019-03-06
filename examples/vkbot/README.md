@@ -7,6 +7,12 @@ Also you can add it to friends or invite to chat.
   
 For work you need valid VK access token with rights: messages,friends,offline.
 
+# Getting group token
+
+Open group manage and select "Work with API"
+
+# Getting user token (most likely will not work for messages)
+
 You can get it by this url in browser (for your IP):
 
 https://oauth.vk.com/authorize?client_id={{app_id}}&scope=offline,group,messages,friends&display=page&response_type=token&redirect_uri=https://oauth.vk.com/blank.html
