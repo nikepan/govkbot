@@ -8,6 +8,10 @@
 
 This is simple VK.com bot API.
 
+
+> At 2019-03-01 VK was restrict messages.send for user_tokens. This bot can work with group_token, and access to chat members if has admin rights in chat. You can use v1.0.1 also, if you need only user_token access.
+
+
 It can:
 
 * Reply to messages (private and chat)  
@@ -17,7 +21,9 @@ It can:
 
 Installatioin:
 
-`go get github.com/nikepan/govkbot`
+Use `go mod`
+For old Go versions you can also use
+`go get github.com/nikepan/govkbot/v2`
 
 For work you need get VK access token with rights: messages,friends,offline (see below).
 
@@ -26,7 +32,7 @@ For work you need get VK access token with rights: messages,friends,offline (see
 
 ```Go
 package main
-import "github.com/nikepan/govkbot"
+import "github.com/nikepan/govkbot/v2"
 import "log"
 
 var VKAdminID = 3759927
@@ -34,6 +40,16 @@ var VKToken = "efjr98j9fj8jf4j958jj4985jfj9joijerf0fj548jf94jfiroefije495jf48"
 
 func helpHandler(m *govkbot.Message) (reply string) {
   return "help received"
+}
+
+func startHandler(m *govkbot.Message) (reply govkbot.Reply) {
+	keyboard := govkbot.Keyboard{Buttons: make([][]govkbot.Button, 0)}
+	button := govkbot.NewButton("/help", nil)
+	row := make([]govkbot.Button, 0)
+	row = append(row, button)
+	keyboard.Buttons = append(keyboard.Buttons, row)
+
+	return govkbot.Reply{Msg: availableCommands, Keyboard: &keyboard}
 }
 
 func errorHandler(m *govkbot.Message, err error) {
@@ -44,6 +60,7 @@ func main() {
     //govkbot.HandleMessage("/", anyHandler)
     //govkbot.HandleMessage("/me", meHandler)
     govkbot.HandleMessage("/help", helpHandler)
+    govkbot.HandleAdvancedMessage("/start", startHandler)
 
     //govkbot.HandleAction("chat_invite_user", inviteHandler)
     //govkbot.HandleAction("chat_kick_user", kickHandler)
@@ -65,9 +82,11 @@ func main() {
     govkbot.Listen(VKToken, "", "", VKAdminID)
 }
 ```
+# Getting group token
 
+Open group manage and select "Work with API"
 
-# Getting token
+# Getting user token (most likely will not work for messages)
 
 You need standalone vk app_id. You can use any app_id from https://vk.com/apps?act=wingames, for example 4775211 
  (Or you can create own app and get app_id on page https://vk.com/editapp?act=create (standalone app))

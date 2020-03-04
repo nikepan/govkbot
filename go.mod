@@ -1,4 +1,4 @@
-module github.com/nikepan/govkbot
+module github.com/nikepan/govkbot/v2
 
 require (
 	github.com/labstack/gommon v0.2.8

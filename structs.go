@@ -34,20 +34,21 @@ type Reply struct {
 
 // Message - VK message struct
 type Message struct {
-	ID        int
-	Date      int
-	Out       int
-	UserID    int   `json:"user_id"`
-	ChatID    int   `json:"chat_id"`
-	PeerID    int64 `json:"peer_id"`
-	ReadState int   `json:"read_state"`
-	Title     string
-	Body      string
-	Action    string
-	ActionMID int `json:"action_mid"`
-	Flags     int
-	Timestamp int64
-	Payload   string
+	ID          int
+	Date        int
+	Out         int
+	UserID      int   `json:"user_id"`
+	ChatID      int   `json:"chat_id"`
+	PeerID      int64 `json:"peer_id"`
+	ReadState   int   `json:"read_state"`
+	Title       string
+	Body        string
+	Action      string
+	ActionMID   int `json:"action_mid"`
+	Flags       int
+	Timestamp   int64
+	Payload     string
+	FwdMessages []Message `json:"fwd_messages"`
 }
 
 // Messages - VK Messages
@@ -70,25 +71,27 @@ type Geo struct {
 
 // User - simple VK user struct
 type User struct {
-	ID          int    `json:"id"`
-	FirstName   string `json:"first_name"`
-	LastName    string `json:"last_name"`
-	ScreenName  string `json:"screen_name"`
-	Photo       string `json:"photo"`
-	InvitedBy   int    `json:"invited_by"`
-	City        Geo    `json:"city"`
-	Country     Geo    `json:"country"`
-	Sex         int    `json:"sex"`
-	BDate       string `json:"bdate"`
-	Photo50     string `json:"photo_50"`
-	Photo100    string `json:"photo_100"`
-	Status      string `json:"status"`
-	About       string `json:"about"`
-	Relation    int    `json:"relation"`
-	Hidden      int    `json:"hidden"`
-	Deactivated string `json:"deactivated"`
-	IsAdmin     bool   `json:"is_admin"`
-	IsOwner     bool   `json:"is_owner"`
+	ID              int    `json:"id"`
+	FirstName       string `json:"first_name"`
+	LastName        string `json:"last_name"`
+	ScreenName      string `json:"screen_name"`
+	Photo           string `json:"photo"`
+	InvitedBy       int    `json:"invited_by"`
+	City            Geo    `json:"city"`
+	Country         Geo    `json:"country"`
+	Sex             int    `json:"sex"`
+	BDate           string `json:"bdate"`
+	Photo50         string `json:"photo_50"`
+	Photo100        string `json:"photo_100"`
+	Status          string `json:"status"`
+	About           string `json:"about"`
+	Relation        int    `json:"relation"`
+	Hidden          int    `json:"hidden"`
+	Closed          int    `json:"is_closed"`
+	CanAccessClosed int    `json:"can_access_closed"`
+	Deactivated     string `json:"deactivated"`
+	IsAdmin         bool   `json:"is_admin"`
+	IsOwner         bool   `json:"is_owner"`
 }
 
 // FullName - returns full name of user

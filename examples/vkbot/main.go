@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	"github.com/nikepan/govkbot"
+	"github.com/nikepan/govkbot/v2"
 )
 
 var config configuration
