@@ -19,6 +19,7 @@ type VKBot struct {
 	lastUserMessages map[int]int
 	lastChatMessages map[int]int
 	autoFriend       bool
+	IgnoreBots       bool
 	LongPoll         LongPollServer
 	API              *VkAPI
 }
@@ -28,6 +29,7 @@ type msgRoute struct {
 	Handler       func(*Message) Reply
 }
 
+// NewBot - create new instance of bot
 func (api *VkAPI) NewBot() *VKBot {
 	if api.IsGroup() {
 		return &VKBot{
@@ -49,6 +51,7 @@ func (api *VkAPI) NewBot() *VKBot {
 	}
 }
 
+// ListenUser - listen User VK API (deprecated)
 func (bot *VKBot) ListenUser(api *VkAPI) error {
 	bot.LongPoll = NewUserLongPollServer(false, longPollVersion, API.RequestInterval)
 	go bot.friendReceiver()
@@ -60,6 +63,7 @@ func (bot *VKBot) ListenUser(api *VkAPI) error {
 	return nil
 }
 
+// ListenGroup - listen group VK API
 func (bot *VKBot) ListenGroup(api *VkAPI) error {
 	bot.LongPoll = NewGroupLongPollServer(API.RequestInterval)
 	c := time.Tick(3 * time.Second)
@@ -92,6 +96,7 @@ func (bot *VKBot) HandleError(handler func(*Message, error)) {
 	bot.errorHandler = handler
 }
 
+// SetAutoFriend - auto add friends
 func (bot *VKBot) SetAutoFriend(af bool) {
 	bot.autoFriend = af
 }
@@ -185,6 +190,9 @@ func (bot *VKBot) RouteMessages(messages []*Message) (result map[*Message][]Repl
 	result = make(map[*Message][]Reply)
 	for _, m := range messages {
 		if m.ReadState == 0 {
+			if bot.IgnoreBots && m.UserID < 0 {
+				continue
+			}
 			replies, err := bot.RouteMessage(m)
 			if err != nil {
 				sendError(m, err)
