@@ -1,5 +1,7 @@
 module github.com/nikepan/govkbot/v2
 
+go 1.15
+
 require (
 	github.com/labstack/gommon v0.2.8
 	github.com/mattn/go-colorable v0.1.0 // indirect
