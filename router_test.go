@@ -35,7 +35,7 @@ func TestHandleError(t *testing.T) {
 
 func TestSetAPI(t *testing.T) {
 	token := "12345"
-	SetAPI(token, "https://vk.com/api/", "5.52")
+	SetAPI(token, "https://vk.com/api/", "5.131")
 	if API.Token != token {
 		t.Error("Error setup API")
 	}
