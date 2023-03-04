@@ -12,5 +12,3 @@ require (
 	github.com/valyala/fasttemplate v0.0.0-20170224212429-dcecefd839c4 // indirect
 	golang.org/x/sys v0.6.0 // indirect
 )
-
-go 1.14
