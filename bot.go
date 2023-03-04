@@ -101,6 +101,11 @@ func (bot *VKBot) SetAutoFriend(af bool) {
 	bot.autoFriend = af
 }
 
+// SetIgnoreBots - ignore bots messages
+func (bot *VKBot) SetIgnoreBots(ignore bool) {
+	bot.IgnoreBots = ignore
+}
+
 // GetMessages - request unread messages from VK (more than 200)
 func (bot *VKBot) GetMessages() ([]*Message, error) {
 	var allMessages []*Message

@@ -110,3 +110,4 @@ If you receive validation check (for example, you use ip first time)
 "redirect_uri":"https://m.vk.com/login?act=security_check&api_hash=Qwerty1234567890"}}
 ```
 you can use https://github.com/Yashko/vk-validation-node.
+
