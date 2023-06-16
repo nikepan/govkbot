@@ -62,9 +62,10 @@ type GroupLongPollEvent struct {
 
 type GroupFailResponse struct {
 	Failed     int
-	Ts         int
-	MinVersion int `json:"min_version"`
-	MaxVersion int `json:"max_version"`
+	Date       int    `json:"date,omitempty"`
+	Ts         string `json:"ts,omitempty"`
+	MinVersion int    `json:"min_version"`
+	MaxVersion int    `json:"max_version"`
 }
 
 // NewLongPollServer - get longpoll server
@@ -137,7 +138,11 @@ func (server *GroupLongPollServer) Request() ([]byte, error) {
 	}
 	switch failResp.Failed {
 	case 1:
-		server.Ts = failResp.Ts
+		if failResp.Ts != "" {
+			server.Ts, _ = strconv.Atoi(failResp.Ts)
+		} else {
+			server.Ts = failResp.Date
+		}
 		return server.Request()
 	case 2:
 		err = server.Init()
@@ -154,7 +159,11 @@ func (server *GroupLongPollServer) Request() ([]byte, error) {
 	case 4:
 		return nil, errors.New("vkapi: wrong longpoll version")
 	default:
-		server.Ts = failResp.Ts
+		if failResp.Ts != "" {
+			server.Ts, _ = strconv.Atoi(failResp.Ts)
+		} else {
+
+		}
 		return buf, nil
 	}
 }
