@@ -17,7 +17,7 @@ import (
 type GroupLongPollServer struct {
 	Key             string
 	Server          string
-	Ts              string
+	Ts              int
 	Wait            int
 	Mode            int
 	Version         int
@@ -62,7 +62,7 @@ type GroupLongPollEvent struct {
 
 type GroupFailResponse struct {
 	Failed     int
-	Ts         string
+	Ts         int
 	MinVersion int `json:"min_version"`
 	MaxVersion int `json:"max_version"`
 }
@@ -112,7 +112,7 @@ func (server *GroupLongPollServer) Request() ([]byte, error) {
 
 	parameters := url.Values{}
 	parameters.Add("act", "a_check")
-	parameters.Add("ts", server.Ts)
+	parameters.Add("ts", strconv.Itoa(server.Ts))
 	parameters.Add("wait", strconv.Itoa(server.Wait))
 	parameters.Add("key", server.Key)
 	query := server.Server + "?" + parameters.Encode()
