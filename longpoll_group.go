@@ -17,7 +17,7 @@ import (
 type GroupLongPollServer struct {
 	Key             string
 	Server          string
-	Ts              int
+	Ts              string
 	Wait            int
 	Mode            int
 	Version         int
@@ -113,7 +113,7 @@ func (server *GroupLongPollServer) Request() ([]byte, error) {
 
 	parameters := url.Values{}
 	parameters.Add("act", "a_check")
-	parameters.Add("ts", strconv.Itoa(server.Ts))
+	parameters.Add("ts", server.Ts)
 	parameters.Add("wait", strconv.Itoa(server.Wait))
 	parameters.Add("key", server.Key)
 	query := server.Server + "?" + parameters.Encode()
@@ -139,9 +139,9 @@ func (server *GroupLongPollServer) Request() ([]byte, error) {
 	switch failResp.Failed {
 	case 1:
 		if failResp.Ts != "" {
-			server.Ts, _ = strconv.Atoi(failResp.Ts)
+			server.Ts = failResp.Ts
 		} else {
-			server.Ts = failResp.Date
+			server.Ts = strconv.Itoa(failResp.Date)
 		}
 		return server.Request()
 	case 2:
@@ -160,9 +160,9 @@ func (server *GroupLongPollServer) Request() ([]byte, error) {
 		return nil, errors.New("vkapi: wrong longpoll version")
 	default:
 		if failResp.Ts != "" {
-			server.Ts, _ = strconv.Atoi(failResp.Ts)
+			server.Ts = failResp.Ts
 		} else {
-
+			server.Ts = strconv.Itoa(failResp.Date)
 		}
 		return buf, nil
 	}
