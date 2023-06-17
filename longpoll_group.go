@@ -68,6 +68,17 @@ type GroupFailResponse struct {
 	MaxVersion int         `json:"max_version"`
 }
 
+func (g *GroupFailResponse) TS() (string, error) {
+	switch g.Ts.(type) {
+	case string:
+		return g.Ts.(string), nil
+	case float64:
+		return strconv.FormatFloat(g.Ts.(float64), 'f', 0, 64), nil
+	default:
+		return "", errors.New("unknown type")
+	}
+}
+
 // NewLongPollServer - get longpoll server
 func NewGroupLongPollServer(requestInterval int) (resp *GroupLongPollServer) {
 	server := GroupLongPollServer{}
@@ -138,7 +149,10 @@ func (server *GroupLongPollServer) Request() ([]byte, error) {
 	}
 	switch failResp.Failed {
 	case 1:
-		server.Ts = strconv.FormatInt(failResp.Ts.(int64), 10)
+		server.Ts, err = failResp.TS()
+		if err != nil {
+			log.Printf("error ts: %+v\n", err)
+		}
 		return server.Request()
 	case 2:
 		err = server.Init()
@@ -155,7 +169,10 @@ func (server *GroupLongPollServer) Request() ([]byte, error) {
 	case 4:
 		return nil, errors.New("vkapi: wrong longpoll version")
 	default:
-		server.Ts = strconv.FormatInt(failResp.Ts.(int64), 10)
+		server.Ts, err = failResp.TS()
+		if err != nil {
+			log.Printf("error ts: %+v\n", err)
+		}
 		return buf, nil
 	}
 }
