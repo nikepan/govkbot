@@ -168,6 +168,7 @@ func (server *UserLongPollServer) Request() ([]byte, error) {
 	failResp := FailResponse{}
 	err = json.Unmarshal(buf, &failResp)
 	if err != nil {
+		log.Printf("longpoll vk resp: %+v\n", string(buf))
 		return nil, err
 	}
 	switch failResp.Failed {
