@@ -215,7 +215,7 @@ func (bot *VKBot) MainRoute() {
 	if err != nil {
 		sendError(nil, err)
 	}
-	debugPrint("inbox: ", messages)
+	debugPrint("inbox: %+v\n", messages)
 	replies := bot.RouteMessages(messages)
 	for m, msgs := range replies {
 		for _, reply := range msgs {
