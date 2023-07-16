@@ -3,7 +3,6 @@ package govkbot
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -262,13 +261,13 @@ func (server *UserLongPollServer) ParseLongPollMessages(j string) (*LongPollResp
 					msg.ChatID = int(msg.PeerID - ChatPrefix)
 				}
 				msg.Date = getJSONInt(el[4])
-				fmt.Println(msg.Body)
+				debugPrint(msg.Body)
 				result.Messages = append(result.Messages, &msg)
 			}
 		}
 	}
 	if len(result.Messages) == 0 {
-		fmt.Println(j)
+		debugPrint(j)
 	}
 	result.Messages = server.FilterReadMesages(result.Messages)
 	return &result, nil

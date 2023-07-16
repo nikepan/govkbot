@@ -243,6 +243,7 @@ func (server *GroupLongPollServer) ParseLongPollMessages(j string) (*GroupLongPo
 			obj := event.(map[string]interface{})["object"].(map[string]interface{})
 			out := getJSONInt(obj["out"])
 			if out == 0 {
+				debugPrint("new message: %+v\n", obj)
 				msg, err := server.ParseMessage(obj)
 				result.Messages = append(result.Messages, &msg)
 				if err != nil {
@@ -252,10 +253,10 @@ func (server *GroupLongPollServer) ParseLongPollMessages(j string) (*GroupLongPo
 		}
 	}
 	if len(result.Messages) == 0 {
-		fmt.Println(j)
+		debugPrint(j)
 	}
 	if len(result.Messages) > 0 {
-		fmt.Printf("new messages: ts: %+v = %+v\n", result.Ts, len(result.Messages))
+		debugPrint("new messages: ts: %+v = %+v\n", result.Ts, len(result.Messages))
 	}
 	// result.Messages = server.FilterReadMesages(result.Messages)
 	// fmt.Printf("\n>>>>>>>>>>>>>messages2: %+v\n\n", result)

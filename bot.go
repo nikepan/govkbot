@@ -1,7 +1,6 @@
 package govkbot
 
 import (
-	"fmt"
 	"log"
 	"strconv"
 	"strings"
@@ -142,7 +141,7 @@ func (bot *VKBot) GetMessages() ([]*Message, error) {
 	return allMessages, err
 }
 
-//RouteAction routes an action
+// RouteAction routes an action
 func (bot *VKBot) RouteAction(m *Message) (replies []string, err error) {
 	if m.Action != "" {
 		debugPrint("route action: %+v\n", m.Action)
@@ -216,11 +215,11 @@ func (bot *VKBot) MainRoute() {
 	if err != nil {
 		sendError(nil, err)
 	}
-	fmt.Println("inbox: ", messages)
+	debugPrint("inbox: ", messages)
 	replies := bot.RouteMessages(messages)
 	for m, msgs := range replies {
 		for _, reply := range msgs {
-			fmt.Println("outbox: ", reply.Msg)
+			debugPrint("outbox: ", reply.Msg)
 			if reply.Msg != "" || reply.Keyboard != nil {
 				_, err = bot.Reply(m, reply)
 				if err != nil {
