@@ -190,7 +190,7 @@ func (server *GroupLongPollServer) GetLongPollMessages() ([]*Message, error) {
 func (server *GroupLongPollServer) ParseMessage(obj map[string]interface{}) Message {
 	msg := Message{}
 	msg.ID = getJSONInt(obj["id"])
-	if obj["text"] == nil {
+	if obj["text"] != nil {
 		msg.Body = obj["text"].(string)
 	}
 	userID := getJSONInt(obj["from_id"])
