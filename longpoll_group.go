@@ -187,11 +187,15 @@ func (server *GroupLongPollServer) GetLongPollMessages() ([]*Message, error) {
 	return messages.Messages, nil
 }
 
-func (server *GroupLongPollServer) ParseMessage(obj map[string]interface{}) Message {
+func (server *GroupLongPollServer) ParseMessage(obj map[string]interface{}) (Message, error) {
 	msg := Message{}
 	msg.ID = getJSONInt(obj["id"])
 	if obj["text"] != nil {
 		msg.Body = obj["text"].(string)
+	} else {
+		msg.Body = ""
+		fmt.Printf("error parse message: %+v\n", obj)
+		return msg, errors.New("error parse message")
 	}
 	userID := getJSONInt(obj["from_id"])
 	if userID != 0 {
@@ -207,11 +211,15 @@ func (server *GroupLongPollServer) ParseMessage(obj map[string]interface{}) Mess
 	fwd, ok := obj["fwd_messages"]
 	if ok {
 		for _, m := range fwd.([]interface{}) {
-			fwdMsg := server.ParseMessage(m.(map[string]interface{}))
-			msg.FwdMessages = append(msg.FwdMessages, fwdMsg)
+			fwdMsg, err := server.ParseMessage(m.(map[string]interface{}))
+			if err != nil {
+				fmt.Printf("error parse fwd message: %+v\n", err)
+			} else {
+				msg.FwdMessages = append(msg.FwdMessages, fwdMsg)
+			}
 		}
 	}
-	return msg
+	return msg, nil
 }
 
 // ParseLongPollMessages - parse longpoll messages
@@ -235,10 +243,11 @@ func (server *GroupLongPollServer) ParseLongPollMessages(j string) (*GroupLongPo
 			obj := event.(map[string]interface{})["object"].(map[string]interface{})
 			out := getJSONInt(obj["out"])
 			if out == 0 {
-				fmt.Printf("\nobj: %+v\n\n", obj)
-				msg := server.ParseMessage(obj)
+				msg, err := server.ParseMessage(obj)
 				result.Messages = append(result.Messages, &msg)
-				fmt.Printf("\n>>>>>>>>>>>>>msg: %+v\n\n", msg)
+				if err != nil {
+					fmt.Printf("error parse message: %+v \n>>>%+v \n>>>>> %+v\n", err, obj, msg)
+				}
 			}
 		}
 	}
