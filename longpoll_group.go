@@ -211,7 +211,6 @@ func (server *GroupLongPollServer) ParseMessage(obj map[string]interface{}) Mess
 			msg.FwdMessages = append(msg.FwdMessages, fwdMsg)
 		}
 	}
-	fmt.Printf("%+v\n", msg)
 	return msg
 }
 
@@ -236,6 +235,7 @@ func (server *GroupLongPollServer) ParseLongPollMessages(j string) (*GroupLongPo
 			obj := event.(map[string]interface{})["object"].(map[string]interface{})
 			out := getJSONInt(obj["out"])
 			if out == 0 {
+				fmt.Printf("\nobj: %+v\n\n", obj)
 				msg := server.ParseMessage(obj)
 				result.Messages = append(result.Messages, &msg)
 				fmt.Printf("\n>>>>>>>>>>>>>msg: %+v\n\n", msg)
