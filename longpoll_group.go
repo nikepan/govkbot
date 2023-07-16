@@ -254,7 +254,9 @@ func (server *GroupLongPollServer) ParseLongPollMessages(j string) (*GroupLongPo
 	if len(result.Messages) == 0 {
 		fmt.Println(j)
 	}
-	fmt.Printf("\n>>>>>>>>>>>>>messages: %+v\n\n", result)
+	if len(result.Messages) > 0 {
+		fmt.Printf("new messages: ts: %+v = %+v\n", result.Ts, len(result.Messages))
+	}
 	// result.Messages = server.FilterReadMesages(result.Messages)
 	// fmt.Printf("\n>>>>>>>>>>>>>messages2: %+v\n\n", result)
 	return &result, nil
