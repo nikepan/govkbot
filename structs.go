@@ -87,7 +87,7 @@ type User struct {
 	About           string `json:"about"`
 	Relation        int    `json:"relation"`
 	Hidden          int    `json:"hidden"`
-	Closed          int    `json:"is_closed"`
+	Closed          bool    `json:"is_closed"`
 	CanAccessClosed bool    `json:"can_access_closed"`
 	Deactivated     string `json:"deactivated"`
 	IsAdmin         bool   `json:"is_admin"`
