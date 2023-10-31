@@ -6,7 +6,7 @@ import (
 
 // Mention - user mention in message
 type Mention struct {
-	ID   int
+	ID   int64
 	Name string
 }
 
@@ -26,7 +26,7 @@ type Keyboard struct {
 	Buttons [][]Button `json:"buttons"`
 }
 
-//Reply for message
+// Reply for message
 type Reply struct {
 	Msg      string
 	Keyboard *Keyboard
@@ -34,7 +34,7 @@ type Reply struct {
 
 // Message - VK message struct
 type Message struct {
-	ID          int
+	ID          int64
 	Date        int
 	Out         int
 	UserID      int   `json:"user_id"`
@@ -71,12 +71,12 @@ type Geo struct {
 
 // User - simple VK user struct
 type User struct {
-	ID              int    `json:"id"`
+	ID              int64  `json:"id"`
 	FirstName       string `json:"first_name"`
 	LastName        string `json:"last_name"`
 	ScreenName      string `json:"screen_name"`
 	Photo           string `json:"photo"`
-	InvitedBy       int    `json:"invited_by"`
+	InvitedBy       int64  `json:"invited_by"`
 	City            Geo    `json:"city"`
 	Country         Geo    `json:"country"`
 	Sex             int    `json:"sex"`
@@ -107,16 +107,16 @@ type VKUsers []*User
 
 // MemberItem - conversation item
 type MemberItem struct {
-	MemberID  int  `json:"member_id"`
-	JoinDate  int  `json:"join_date"`
-	IsOwner   bool `json:"is_owner"`
-	IsAdmin   bool `json:"is_admin"`
-	InvitedBy int  `json:"invited_by"`
+	MemberID  int64 `json:"member_id"`
+	JoinDate  int   `json:"join_date"`
+	IsOwner   bool  `json:"is_owner"`
+	IsAdmin   bool  `json:"is_admin"`
+	InvitedBy int64 `json:"invited_by"`
 }
 
 // UserProfile - conversation user profile
 type UserProfile struct {
-	ID              int
+	ID              int64
 	FirstName       string `json:"first_name"`
 	LastName        string `json:"last_name"`
 	IsClosed        bool   `json:"is_closed"`
@@ -132,7 +132,7 @@ type UserProfile struct {
 
 // GroupProfile - conversation group profile
 type GroupProfile struct {
-	ID       int
+	ID       int64
 	Name     string
 	IsClosed int `json:"is_closed"`
 	Type     string
@@ -191,7 +191,7 @@ type ErrorResponse struct {
 
 // ChatInfo - chat info
 type ChatInfo struct {
-	ID      int    `json:"id"`
+	ID      int64  `json:"id"`
 	Type    string `json:"type"`
 	Title   string `json:"title"`
 	Kicked  int    `json:"kicked"`
@@ -216,15 +216,15 @@ func (err ResponseError) Error() string {
 	return err.err.Error()
 }
 
-//Content - error content
+// Content - error content
 func (err ResponseError) Content() string {
 	return err.content
 }
 
-//ConversationInfo - conversation info
+// ConversationInfo - conversation info
 type ConversationInfo struct {
 	Peer struct {
-		ID      int
+		ID      int64
 		Type    string
 		LocalID int `json:"local_id"`
 	}
@@ -252,7 +252,7 @@ type ConversationInfo struct {
 	} `json:"chat_settings"`
 }
 
-//ConversationsResponse - resonse of confersations info
+// ConversationsResponse - resonse of confersations info
 type ConversationsResponse struct {
 	Response struct {
 		Items    []ConversationInfo
