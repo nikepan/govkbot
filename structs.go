@@ -247,8 +247,8 @@ type ConversationInfo struct {
 			CanSeeInviteLink    bool `json:"can_see_invite_link"`
 			CanChangeInviteLink bool `json:"can_change_invite_link"`
 		}
-		IsGroupChannel bool `json:"is_group_channel"`
-		OwnerID        int  `json:"owner_id"`
+		IsGroupChannel bool  `json:"is_group_channel"`
+		OwnerID        int64 `json:"owner_id"`
 	} `json:"chat_settings"`
 }
 
