@@ -1,0 +1,44 @@
+{
+  "response": {
+    "count": 2,
+    "items": [
+      {
+        "member_id": -1
+      },
+      {
+        "member_id": 1
+      }
+    ],
+    "profiles": [
+      {
+        "id": 1,
+        "sex": 2,
+        "screen_name": "durov",
+        "photo_50": "",
+        "photo_100": "",
+        "online_info": {
+          "visible": true,
+          "is_online": false,
+          "is_mobile": false
+        },
+        "online": 0,
+        "first_name": "P",
+        "last_name": "D",
+        "can_access_closed": true,
+        "is_closed": false
+      }
+    ],
+    "groups": [
+      {
+        "id": 1,
+        "name": "",
+        "screen_name": "abcdef",
+        "is_closed": 0,
+        "type": "page",
+        "photo_50": "",
+        "photo_100": "",
+        "photo_200": ""
+      }
+    ]
+  }
+}

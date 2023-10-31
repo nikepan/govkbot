@@ -132,20 +132,21 @@ type UserProfile struct {
 
 // GroupProfile - conversation group profile
 type GroupProfile struct {
-	ID       int64
-	Name     string
-	IsClosed int `json:"is_closed"`
-	Type     string
-	Photo50  string
-	Photo100 string
-	Photo200 string
+	ID         int64  `json:"id"`
+	Name       string `json:"name"`
+	ScreenName string `json:"screen_name"`
+	IsClosed   int    `json:"is_closed"`
+	Type       string `json:"type"`
+	Photo50    string `json:"photo50"`
+	Photo100   string `json:"photo100"`
+	Photo200   string `json:"photo200"`
 }
 
 // VKMembers - conversation members info
 type VKMembers struct {
-	Items    []MemberItem
-	Profiles []UserProfile
-	Groups   []GroupProfile
+	Items    []MemberItem   `json:"items"`
+	Profiles []UserProfile  `json:"profiles"`
+	Groups   []GroupProfile `json:"groups"`
 }
 
 // UsersResponse - VK user response
@@ -191,12 +192,12 @@ type ErrorResponse struct {
 
 // ChatInfo - chat info
 type ChatInfo struct {
-	ID      int64  `json:"id"`
-	Type    string `json:"type"`
-	Title   string `json:"title"`
-	Kicked  int    `json:"kicked"`
-	AdminID int64  `json:"admin_id"`
-	Users   VKUsers
+	ID      int64   `json:"id"`
+	Type    string  `json:"type"`
+	Title   string  `json:"title"`
+	Kicked  int     `json:"kicked"`
+	AdminID int64   `json:"admin_id"`
+	Users   VKUsers `json:"users"`
 }
 
 // VKError - error info

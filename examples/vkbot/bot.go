@@ -11,10 +11,10 @@ type configuration struct {
 	VKToken      string
 	ServiceURL   string
 	ServiceToken string
-	AdminID      int
+	AdminID      int64
 }
 
-func getMeMessage(uid int) (reply string) {
+func getMeMessage(uid int64) (reply string) {
 	me, _ := govkbot.API.Me()
 	return fmt.Sprintf("You: %+v %+v", me.FirstName, me.LastName)
 }
@@ -66,7 +66,7 @@ func kickHandler(m *govkbot.Message) (reply string) {
 	return reply
 }
 
-func greetUser(uid int) (reply string) {
+func greetUser(uid int64) (reply string) {
 	u, err := govkbot.API.User(uid)
 	if err == nil {
 		reply = fmt.Sprintf("Hello, %+v", u.FullName())

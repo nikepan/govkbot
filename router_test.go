@@ -135,8 +135,8 @@ func TestCheckFriends(t *testing.T) {
 func TestMainRoute(t *testing.T) {
 	SetAPI("", "test", "")
 	HandleError(errorHandler)
-	Bot.LongPoll = NewUserLongPollServer(false, longPollVersion, API.RequestInterval)
-	Bot.MainRoute()
+	poller := NewUserLongPollServer(false, longPollVersion, API.RequestInterval)
+	Bot.MainRoute(poller)
 }
 
 func TestNotifyAdmin(t *testing.T) {

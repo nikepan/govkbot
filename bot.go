@@ -19,7 +19,6 @@ type VKBot struct {
 	lastChatMessages map[int64]int64
 	autoFriend       bool
 	IgnoreBots       bool
-	LongPoll         LongPollServer
 	API              *VkAPI
 }
 
@@ -30,44 +29,33 @@ type msgRoute struct {
 
 // NewBot - create new instance of bot
 func (api *VkAPI) NewBot() *VKBot {
-	if api.IsGroup() {
-		return &VKBot{
-			msgRoutes:        make(map[string]msgRoute),
-			actionRoutes:     make(map[string]func(*Message) string),
-			lastUserMessages: make(map[int64]int64),
-			lastChatMessages: make(map[int64]int64),
-			LongPoll:         NewGroupLongPollServer(API.RequestInterval),
-			API:              api,
-		}
-	}
 	return &VKBot{
 		msgRoutes:        make(map[string]msgRoute),
 		actionRoutes:     make(map[string]func(*Message) string),
 		lastUserMessages: make(map[int64]int64),
 		lastChatMessages: make(map[int64]int64),
-		LongPoll:         NewUserLongPollServer(false, longPollVersion, API.RequestInterval),
 		API:              api,
 	}
 }
 
 // ListenUser - listen User VK API (deprecated)
 func (bot *VKBot) ListenUser(api *VkAPI) error {
-	bot.LongPoll = NewUserLongPollServer(false, longPollVersion, API.RequestInterval)
+	poller := NewUserLongPollServer(false, longPollVersion, API.RequestInterval)
 	go bot.friendReceiver()
 
 	c := time.Tick(3 * time.Second)
 	for range c {
-		bot.MainRoute()
+		bot.MainRoute(poller)
 	}
 	return nil
 }
 
 // ListenGroup - listen group VK API
 func (bot *VKBot) ListenGroup(api *VkAPI) error {
-	bot.LongPoll = NewGroupLongPollServer(API.RequestInterval)
+	poller := NewGroupLongPollServer(API.RequestInterval)
 	c := time.Tick(3 * time.Second)
 	for range c {
-		bot.MainRoute()
+		bot.MainRoute(poller)
 	}
 	return nil
 }
@@ -210,8 +198,8 @@ func (bot *VKBot) RouteMessages(messages []*Message) (result map[*Message][]Repl
 }
 
 // MainRoute - main router func. Working cycle Listen.
-func (bot *VKBot) MainRoute() {
-	messages, err := bot.LongPoll.GetLongPollMessages()
+func (bot *VKBot) MainRoute(poller LongPollServer) {
+	messages, err := poller.GetLongPollMessages()
 	if err != nil {
 		sendError(nil, err)
 	}

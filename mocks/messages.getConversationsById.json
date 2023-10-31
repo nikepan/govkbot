@@ -1,0 +1,31 @@
+{
+  "response": {
+    "count": 1,
+    "items": [
+      {
+        "peer": {
+          "id": 1,
+          "type": "user",
+          "local_id": 1
+        },
+        "last_message_id": 0,
+        "in_read": 0,
+        "out_read": 0,
+        "sort_id": {
+          "major_id": 0,
+          "minor_id": 0
+        },
+        "last_conversation_message_id": 0,
+        "in_read_cmid": 0,
+        "out_read_cmid": 0,
+        "is_marked_unread": false,
+        "important": false,
+        "can_write": {
+          "allowed": false,
+          "reason": 901
+        },
+        "peer_flags": 0
+      }
+    ]
+  }
+}

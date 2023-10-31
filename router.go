@@ -6,7 +6,7 @@ import (
 
 const (
 	vkAPIURL        = "https://api.vk.com/method/"
-	vkAPIVer        = "5.131"
+	vkAPIVer        = "5.154"
 	messagesCount   = 200
 	requestInterval = 400 // 3 requests per second VK limit
 	longPollVersion = 3

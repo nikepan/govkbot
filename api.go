@@ -41,13 +41,16 @@ const (
 	apiMessagesGetChatUsers           = "messages.getChatUsers"
 	apiMessagesGetConversationMembers = "messages.getConversationMembers"
 	apiMessagesSend                   = "messages.send"
-	apiMessagesMarkAsRead             = "messages.markAsRead"
+	apiMessagesMarkARead              = "messages.markAsRead"
 	apiFriendsGetRequests             = "friends.getRequests"
 	apiFriendsAdd                     = "friends.add"
 	apiFriendsDelete                  = "friends.delete"
 )
 
 func (api *VkAPI) IsGroup() bool {
+	if api.Token == "" {
+		return true
+	}
 	if api.GroupID != 0 {
 		return true
 	} else if api.UID != 0 {
@@ -148,14 +151,15 @@ func (api *VkAPI) Me() (*User, error) {
 }
 
 // CurrentGroup - get current group info
-func (api *VkAPI) CurrentGroup() (*User, error) {
+func (api *VkAPI) CurrentGroup() (*GroupProfile, error) {
 
-	r := UsersResponse{}
+	r := MembersResponse{}
 	err := api.CallMethod(apiGroupsGet, H{"fields": "screen_name"}, &r)
 
-	if len(r.Response) > 0 {
-		debugPrint("me: %+v - %+v\n", r.Response[0].ID, r.Response[0].ScreenName)
-		return r.Response[0], err
+	if len(r.Response.Groups) > 0 {
+		group := r.Response.Groups[0]
+		debugPrint("me: %+v - %+v\n", group.ID, group.ScreenName)
+		return &group, err
 	}
 	return nil, err
 }
