@@ -161,10 +161,10 @@ func (api *VkAPI) CurrentGroup() (*User, error) {
 }
 
 // GetChatInfo - returns Chat info by id
-func (api *VkAPI) GetUserChatInfo(chatID int) (*ChatInfo, error) {
+func (api *VkAPI) GetUserChatInfo(chatID int64) (*ChatInfo, error) {
 	r := ChatInfoResponse{}
 	err := api.CallMethod(apiMessagesGetChat, H{
-		"chat_id": strconv.Itoa(chatID),
+		"chat_id": strconv.FormatInt(chatID, 10),
 		"fields":  "photo,city,country,sex,bdate",
 	}, &r)
 
@@ -172,10 +172,10 @@ func (api *VkAPI) GetUserChatInfo(chatID int) (*ChatInfo, error) {
 }
 
 // GetChatInfo - returns Chat info by id
-func (api *VkAPI) GetConversation(chatID int) (*ChatInfo, error) {
+func (api *VkAPI) GetConversation(chatID int64) (*ChatInfo, error) {
 	r := ConversationsResponse{}
 	err := api.CallMethod(apiMessagesGetConversationsById, H{
-		"peer_ids": strconv.Itoa(chatID),
+		"peer_ids": strconv.FormatInt(chatID, 10),
 		"extended": "1",
 		"fields":   "photo,city,country,sex,bdate",
 	}, &r)
@@ -210,14 +210,14 @@ func (api *VkAPI) GetConversation(chatID int) (*ChatInfo, error) {
 }
 
 // GetChatInfo - returns Chat info by id
-func (api *VkAPI) GetChatInfo(chatID int) (*ChatInfo, error) {
+func (api *VkAPI) GetChatInfo(chatID int64) (*ChatInfo, error) {
 	if api.IsGroup() {
 		return api.GetConversation(chatID)
 	}
 	return api.GetUserChatInfo(chatID)
 }
 
-func (api *VkAPI) GetChatFullInfo(chatID int) (*ChatInfo, error) {
+func (api *VkAPI) GetChatFullInfo(chatID int64) (*ChatInfo, error) {
 	info, err := api.GetChatInfo(chatID)
 	if err != nil {
 		return nil, err
@@ -233,11 +233,11 @@ func (api *VkAPI) GetChatFullInfo(chatID int) (*ChatInfo, error) {
 }
 
 // GetChatUsers - get chat users
-func (api *VkAPI) GetUserChatUsers(chatID int) (users []*User, err error) {
+func (api *VkAPI) GetUserChatUsers(chatID int64) (users []*User, err error) {
 
 	r := UsersResponse{}
 	err = api.CallMethod(apiMessagesGetChatUsers, H{
-		"chat_id": strconv.Itoa(chatID),
+		"chat_id": strconv.FormatInt(chatID, 10),
 		"fields":  "photo,city,country,sex,bdate",
 	}, &r)
 
@@ -245,12 +245,12 @@ func (api *VkAPI) GetUserChatUsers(chatID int) (users []*User, err error) {
 }
 
 // GetChatUsers - get chat users
-func (api *VkAPI) GetConversationMembers(chatID int) (users []*User, err error) {
+func (api *VkAPI) GetConversationMembers(chatID int64) (users []*User, err error) {
 
 	r := MembersResponse{}
 
 	err = api.CallMethod(apiMessagesGetConversationMembers, H{
-		"peer_id": strconv.Itoa(chatID),
+		"peer_id": strconv.FormatInt(chatID, 10),
 		"fields":  "photo,city,country,sex,bdate",
 	}, &r)
 
@@ -280,7 +280,7 @@ func (api *VkAPI) GetConversationMembers(chatID int) (users []*User, err error) 
 	return users, err
 }
 
-func (api *VkAPI) GetChatUsers(chatID int) (users []*User, err error) {
+func (api *VkAPI) GetChatUsers(chatID int64) (users []*User, err error) {
 	if api.IsGroup() {
 		return api.GetConversationMembers(chatID)
 	}
@@ -335,11 +335,11 @@ func (api *VkAPI) DeleteFriend(uid int64) bool {
 }
 
 // User - get simple user info
-func (api *VkAPI) User(uid int) (*User, error) {
+func (api *VkAPI) User(uid int64) (*User, error) {
 
 	r := UsersResponse{}
 	err := api.CallMethod(apiUsersGet, H{
-		"user_ids": strconv.Itoa(uid),
+		"user_ids": strconv.FormatInt(uid, 10),
 		"fields":   "sex,screen_name, city, country, bdate",
 	}, &r)
 
