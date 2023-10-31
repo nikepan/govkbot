@@ -44,7 +44,7 @@ type Message struct {
 	Title       string
 	Body        string
 	Action      string
-	ActionMID   int `json:"action_mid"`
+	ActionMID   int64 `json:"action_mid"`
 	Flags       int
 	Timestamp   int64
 	Payload     string
