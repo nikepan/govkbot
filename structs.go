@@ -195,7 +195,7 @@ type ChatInfo struct {
 	Type    string `json:"type"`
 	Title   string `json:"title"`
 	Kicked  int    `json:"kicked"`
-	AdminID int    `json:"admin_id"`
+	AdminID int64  `json:"admin_id"`
 	Users   VKUsers
 }
 
