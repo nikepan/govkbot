@@ -25,7 +25,7 @@ type GroupLongPollServer struct {
 	NeedPts         bool
 	API             *VkAPI
 	LpVersion       int
-	ReadMessages    map[int]time.Time
+	ReadMessages    map[int64]time.Time
 }
 
 type GroupLongPollServerResponse struct {
@@ -36,28 +36,28 @@ type GroupLongPollMessage struct {
 	Type   string
 	Object struct {
 		Date                  int                    `json:"date"`
-		FromID                int                    `json:"from_id"`
-		ID                    int                    `json:"id"`
+		FromID                int64                  `json:"from_id"`
+		ID                    int64                  `json:"id"`
 		Out                   int                    `json:"out"`
 		PeerID                int                    `json:"peer_id"`
 		Text                  string                 `json:"text"`
 		ConversationMessageID int                    `json:"conversation_message_id"`
 		FwdMessages           []GroupLongPollMessage `json:"fwd_messages"`
 		Important             bool                   `json:"important"`
-		RandomID              int                    `json:"random_id"`
+		RandomID              int64                  `json:"random_id"`
 		//Attachments [] `json:"attachments"`
 		IsHidden bool `json:"is_hidden"`
 		Action   struct {
 			Type     string
-			MemberID int `json:"member_id"`
+			MemberID int64 `json:"member_id"`
 		}
 	}
-	GroupID int
+	GroupID int64
 }
 
 type GroupLongPollEvent struct {
 	Type    string
-	GroupID int
+	GroupID int64
 }
 
 type GroupFailResponse struct {
@@ -86,7 +86,7 @@ func NewGroupLongPollServer(requestInterval int) (resp *GroupLongPollServer) {
 	server.Mode = DefaultMode
 	server.Version = DefaultVersion
 	server.RequestInterval = requestInterval
-	server.ReadMessages = make(map[int]time.Time)
+	server.ReadMessages = make(map[int64]time.Time)
 	return &server
 }
 
@@ -94,7 +94,7 @@ func NewGroupLongPollServer(requestInterval int) (resp *GroupLongPollServer) {
 func (server *GroupLongPollServer) Init() (err error) {
 	r := GroupLongPollServerResponse{}
 	err = API.CallMethod("groups.getLongPollServer", H{
-		"group_id": strconv.Itoa(API.GroupID),
+		"group_id": strconv.FormatInt(API.GroupID, 10),
 	}, &r)
 	server.Wait = DefaultWait
 	server.Mode = DefaultMode
@@ -189,7 +189,7 @@ func (server *GroupLongPollServer) GetLongPollMessages() ([]*Message, error) {
 
 func (server *GroupLongPollServer) ParseMessage(obj map[string]interface{}) (Message, error) {
 	msg := Message{}
-	msg.ID = getJSONInt(obj["id"])
+	msg.ID = getJSONInt64(obj["id"])
 	if obj["text"] != nil {
 		msg.Body = obj["text"].(string)
 	} else {
@@ -197,7 +197,7 @@ func (server *GroupLongPollServer) ParseMessage(obj map[string]interface{}) (Mes
 		fmt.Printf("error parse message: %+v\n", obj)
 		return msg, errors.New("error parse message")
 	}
-	userID := getJSONInt(obj["from_id"])
+	userID := getJSONInt64(obj["from_id"])
 	if userID != 0 {
 		msg.UserID = userID
 	}
@@ -205,7 +205,7 @@ func (server *GroupLongPollServer) ParseMessage(obj map[string]interface{}) (Mes
 	if int64(msg.UserID) == msg.PeerID {
 		msg.ChatID = 0
 	} else {
-		msg.ChatID = int(msg.PeerID)
+		msg.ChatID = msg.PeerID
 	}
 	msg.Date = getJSONInt(obj["date"])
 	fwd, ok := obj["fwd_messages"]

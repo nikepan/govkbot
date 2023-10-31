@@ -44,7 +44,7 @@ type UserLongPollServer struct {
 	NeedPts         bool
 	API             *VkAPI
 	LpVersion       int
-	ReadMessages    map[int]time.Time
+	ReadMessages    map[int64]time.Time
 }
 
 // LongPollServerResponse - response format for longpoll info
@@ -106,7 +106,7 @@ func NewUserLongPollServer(needPts bool, lpVersion int, requestInterval int) (re
 	server.Version = DefaultVersion
 	server.RequestInterval = requestInterval
 	server.LpVersion = lpVersion
-	server.ReadMessages = make(map[int]time.Time)
+	server.ReadMessages = make(map[int64]time.Time)
 	return &server
 }
 
@@ -197,7 +197,7 @@ func (server *UserLongPollServer) Request() ([]byte, error) {
 func GetLongPollMessage(resp []interface{}) *Message {
 	message := Message{}
 	mid, _ := resp[1].(json.Number).Int64()
-	message.ID = int(mid)
+	message.ID = mid
 	flags, _ := resp[2].(json.Number).Int64()
 	message.Flags = int(flags)
 	message.PeerID, _ = resp[3].(json.Number).Int64()
@@ -248,17 +248,17 @@ func (server *UserLongPollServer) ParseLongPollMessages(j string) (*LongPollResp
 			out := getJSONInt(el[2]) & 2
 			if out == 0 {
 				msg := Message{}
-				msg.ID = getJSONInt(el[1])
+				msg.ID = getJSONInt64(el[1])
 				msg.Body = el[5].(string)
 				userID := el[6].(map[string]interface{})["from"]
 				if userID != nil {
-					msg.UserID, _ = strconv.Atoi(userID.(string))
+					msg.UserID, _ = strconv.ParseInt(userID.(string), 10, 64)
 				}
 				msg.PeerID = getJSONInt64(el[3])
 				if msg.UserID == 0 {
-					msg.UserID = int(msg.PeerID)
+					msg.UserID = msg.PeerID
 				} else {
-					msg.ChatID = int(msg.PeerID - ChatPrefix)
+					msg.ChatID = msg.PeerID - ChatPrefix
 				}
 				msg.Date = getJSONInt(el[4])
 				debugPrint(msg.Body)

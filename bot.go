@@ -14,9 +14,9 @@ type VKBot struct {
 	cmdHandlers      map[string]func(*Message) string
 	msgHandlers      map[string]func(*Message) string
 	errorHandler     func(*Message, error)
-	LastMsg          int
-	lastUserMessages map[int]int
-	lastChatMessages map[int]int
+	LastMsg          int64
+	lastUserMessages map[int64]int64
+	lastChatMessages map[int64]int64
 	autoFriend       bool
 	IgnoreBots       bool
 	LongPoll         LongPollServer
@@ -34,8 +34,8 @@ func (api *VkAPI) NewBot() *VKBot {
 		return &VKBot{
 			msgRoutes:        make(map[string]msgRoute),
 			actionRoutes:     make(map[string]func(*Message) string),
-			lastUserMessages: make(map[int]int),
-			lastChatMessages: make(map[int]int),
+			lastUserMessages: make(map[int64]int64),
+			lastChatMessages: make(map[int64]int64),
 			LongPoll:         NewGroupLongPollServer(API.RequestInterval),
 			API:              api,
 		}
@@ -43,8 +43,8 @@ func (api *VkAPI) NewBot() *VKBot {
 	return &VKBot{
 		msgRoutes:        make(map[string]msgRoute),
 		actionRoutes:     make(map[string]func(*Message) string),
-		lastUserMessages: make(map[int]int),
-		lastChatMessages: make(map[int]int),
+		lastUserMessages: make(map[int64]int64),
+		lastChatMessages: make(map[int64]int64),
 		LongPoll:         NewUserLongPollServer(false, longPollVersion, API.RequestInterval),
 		API:              api,
 	}
@@ -236,7 +236,7 @@ func (bot *VKBot) MainRoute() {
 }
 
 // Reply - reply message
-func (bot *VKBot) Reply(m *Message, reply Reply) (id int, err error) {
+func (bot *VKBot) Reply(m *Message, reply Reply) (id int64, err error) {
 	if m.PeerID != 0 {
 		return bot.API.SendAdvancedPeerMessage(m.PeerID, reply)
 	}

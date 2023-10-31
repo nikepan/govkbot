@@ -12,7 +12,7 @@ const (
 	longPollVersion = 3
 )
 
-//API - bot API
+// API - bot API
 var API = newAPI()
 
 var Bot = API.NewBot()
@@ -93,7 +93,7 @@ func sendError(msg *Message, err error) {
 }
 
 // Listen - start server
-func Listen(token string, url string, ver string, adminID int) error {
+func Listen(token string, url string, ver string, adminID int64) error {
 	if API.Token == "" {
 		SetAPI(token, url, ver)
 	}

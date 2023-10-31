@@ -37,8 +37,8 @@ type Message struct {
 	ID          int64
 	Date        int
 	Out         int
-	UserID      int   `json:"user_id"`
-	ChatID      int   `json:"chat_id"`
+	UserID      int64 `json:"user_id"`
+	ChatID      int64 `json:"chat_id"`
 	PeerID      int64 `json:"peer_id"`
 	ReadState   int   `json:"read_state"`
 	Title       string
@@ -87,8 +87,8 @@ type User struct {
 	About           string `json:"about"`
 	Relation        int    `json:"relation"`
 	Hidden          int    `json:"hidden"`
-	Closed          bool    `json:"is_closed"`
-	CanAccessClosed bool    `json:"can_access_closed"`
+	Closed          bool   `json:"is_closed"`
+	CanAccessClosed bool   `json:"can_access_closed"`
 	Deactivated     string `json:"deactivated"`
 	IsAdmin         bool   `json:"is_admin"`
 	IsOwner         bool   `json:"is_owner"`
@@ -163,7 +163,7 @@ type MembersResponse struct {
 // FriendRequests - VK friend requests
 type FriendRequests struct {
 	Count int
-	Items []int
+	Items []int64
 }
 
 // FriendRequestsResponse - VK friend requests response
@@ -180,7 +180,7 @@ type FriendDeleteResponse struct {
 
 // SimpleResponse - simple int response
 type SimpleResponse struct {
-	Response int
+	Response int64
 	Error    *VKError
 }
 

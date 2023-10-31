@@ -22,11 +22,11 @@ type VkAPI struct {
 	Token           string
 	URL             string
 	Ver             string
-	UID             int
-	GroupID         int
+	UID             int64
+	GroupID         int64
 	Lang            string
 	HTTPS           bool
-	AdminID         int
+	AdminID         int64
 	MessagesCount   int
 	RequestInterval int
 	DEBUG           bool
@@ -287,7 +287,7 @@ func (api *VkAPI) GetChatUsers(chatID int) (users []*User, err error) {
 	return api.GetUserChatUsers(chatID)
 }
 
-func FindUser(users []*User, ID int) *User {
+func FindUser(users []*User, ID int64) *User {
 	for _, u := range users {
 		if u.ID == ID {
 			return u
@@ -297,7 +297,7 @@ func FindUser(users []*User, ID int) *User {
 }
 
 // GetFriendRequests - get friend requests
-func (api *VkAPI) GetFriendRequests(out bool) (friends []int, err error) {
+func (api *VkAPI) GetFriendRequests(out bool) (friends []int64, err error) {
 	p := H{}
 	if out {
 		p["out"] = "1"
@@ -310,10 +310,10 @@ func (api *VkAPI) GetFriendRequests(out bool) (friends []int, err error) {
 }
 
 // AddFriend - add friend
-func (api *VkAPI) AddFriend(uid int) bool {
+func (api *VkAPI) AddFriend(uid int64) bool {
 
 	r := SimpleResponse{}
-	err := api.CallMethod(apiFriendsAdd, H{"user_id": strconv.Itoa(uid)}, &r)
+	err := api.CallMethod(apiFriendsAdd, H{"user_id": strconv.FormatInt(uid, 10)}, &r)
 	if err != nil {
 		return false
 	}
@@ -322,10 +322,10 @@ func (api *VkAPI) AddFriend(uid int) bool {
 }
 
 // DeleteFriend - delete friend
-func (api *VkAPI) DeleteFriend(uid int) bool {
+func (api *VkAPI) DeleteFriend(uid int64) bool {
 
 	u := FriendDeleteResponse{}
-	err := api.CallMethod(apiFriendsDelete, H{"user_id": strconv.Itoa(uid)}, &u)
+	err := api.CallMethod(apiFriendsDelete, H{"user_id": strconv.FormatInt(uid, 10)}, &u)
 
 	if err != nil {
 		return false
@@ -402,7 +402,7 @@ func (m Message) GetMentions() []Mention {
 		}
 	}
 	if ok {
-		u, err := strconv.Atoi(ustr)
+		u, err := strconv.ParseInt(ustr, 10, 64)
 		if err == nil {
 			mentions = append(mentions, Mention{u, uname})
 		}
@@ -414,8 +414,8 @@ func (api *VkAPI) GetRandomID() string {
 	return strconv.FormatUint(uint64(rand.Uint32()), 10)
 }
 
-//SendAdvancedPeerMessage sending a message to chat
-func (api *VkAPI) SendAdvancedPeerMessage(peerID int64, message Reply) (id int, err error) {
+// SendAdvancedPeerMessage sending a message to chat
+func (api *VkAPI) SendAdvancedPeerMessage(peerID int64, message Reply) (id int64, err error) {
 	r := SimpleResponse{}
 	params := H{
 		"peer_id":          strconv.FormatInt(peerID, 10),
@@ -435,8 +435,8 @@ func (api *VkAPI) SendAdvancedPeerMessage(peerID int64, message Reply) (id int, 
 	return r.Response, err
 }
 
-//SendPeerMessage sending a message to chat
-func (api *VkAPI) SendPeerMessage(peerID int64, msg string) (id int, err error) {
+// SendPeerMessage sending a message to chat
+func (api *VkAPI) SendPeerMessage(peerID int64, msg string) (id int64, err error) {
 	r := SimpleResponse{}
 	err = api.CallMethod(apiMessagesSend, H{
 		"peer_id":          strconv.FormatInt(peerID, 10),
@@ -447,11 +447,11 @@ func (api *VkAPI) SendPeerMessage(peerID int64, msg string) (id int, err error) 
 	return r.Response, err
 }
 
-//SendChatMessage sending a message to chat
-func (api *VkAPI) SendChatMessage(chatID int, msg string) (id int, err error) {
+// SendChatMessage sending a message to chat
+func (api *VkAPI) SendChatMessage(chatID int64, msg string) (id int64, err error) {
 	r := SimpleResponse{}
 	err = api.CallMethod(apiMessagesSend, H{
-		"chat_id":          strconv.Itoa(chatID),
+		"chat_id":          strconv.FormatInt(chatID, 10),
 		"message":          msg,
 		"dont_parse_links": "1",
 		"random_id":        api.GetRandomID(),
@@ -459,12 +459,12 @@ func (api *VkAPI) SendChatMessage(chatID int, msg string) (id int, err error) {
 	return r.Response, err
 }
 
-//SendMessage sending a message to user
-func (api *VkAPI) SendMessage(userID int, msg string) (id int, err error) {
+// SendMessage sending a message to user
+func (api *VkAPI) SendMessage(userID int64, msg string) (id int64, err error) {
 	r := SimpleResponse{}
 	if msg != "" {
 		err = api.CallMethod(apiMessagesSend, H{
-			"user_id":          strconv.Itoa(userID),
+			"user_id":          strconv.FormatInt(userID, 10),
 			"message":          msg,
 			"dont_parse_links": "1",
 			"random_id":        api.GetRandomID(),
